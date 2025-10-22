@@ -22,31 +22,42 @@ Visi kami adalah menjadikan Vacathon sebagai destinasi utama bagi komunitas pela
 
 ## 3. Daftar modul yang akan diimplementasikan
 ### 1. Main Menu
-  1. Menampilkan daftar event marathon yang tersedia (upcoming dan past events).
-  2. Banner utama berisi highlight event terbesar atau terdekat.
-  3. Navigasi ke halaman lain:
+  1. Banner utama berisi highlight event terbesar atau terdekat.
+  2. Navigasi ke halaman lain:
     - Daftar Marathon (event list)
     - Forum Diskusi
     - Akun Saya
     - Tentang Kami/Kontak
-  4. Menampilkan statistik singkat: jumlah peserta, lokasi aktif, sponsor, dll.
-  5. Tombol “Daftar Sekarang” untuk event tertentu.
+  3. Menampilkan statistik singkat: jumlah peserta, lokasi aktif, sponsor, dll.
+  4. Tombol “Daftar Sekarang” untuk event tertentu.
 
-### 2. Filter Event Marathon
-  1. Filter berdasarkan:
-     1. Jarak lari: 5K, 10K, 21K, 42K, Ultra Marathon
-     2. Lokasi/Kota: (misal: Jakarta, Bandung, Bali, Surabaya, dll)
-     3. Tanggal/Waktu: rentang tanggal atau bulan tertentu
-     4. Status Event: Upcoming / Ongoing / Completed
+### 2. Daftar Event (Event Catalog)
+  Tampilan Daftar Event:
+  1. Menampilkan semua event (Upcoming, Ongoing, Completed) dalam format list atau card view.
+  2. Setiap item event menampilkan informasi ringkas (Nama, Tanggal, Lokasi) dan tombol "Lihat Detail".
+
+  Fitur Pencarian:
+  1. Menyediakan bar pencarian (search bar) untuk mencari event berdasarkan nama atau keyword.
+
+  Fungsionalitas Filter (Penyaringan):
+  1. User dapat menyaring daftar event berdasarkan kriteria spesifik.
+  2. Filter berdasarkan Jarak lari: 5K, 10K, 21K, 42K, Ultra Marathon.
+  3. Filter berdasarkan Lokasi/Kota: (misal: Jakarta, Bandung, Bali, Surabaya, dll).
+  4. Filter berdasarkan Tanggal/Waktu: rentang tanggal atau bulan tertentu.
+  5. Filter berdasarkan Status Event: Upcoming / Ongoing / Completed.
+  6. Mendukung kemampuan multi-filter (menggabungkan beberapa kriteria filter sekaligus).
+
+  Fungsionalitas Sorting (Pengurutan):
+  1. User dapat mengurutkan daftar event yang ditampilkan.
+  2. Sorting berdasarkan Terpopuler (jumlah peserta terbanyak).
+  3. Sorting berdasarkan Tanggal terdekat.
+  4. Sorting berdasarkan Lokasi terdekat (opsional jika ada data geolokasi).
+
+  Kontrol Tampilan:
+  1. Tombol Reset Filter untuk menghapus semua filter yang aktif dan mengembalikan tampilan ke daftar semua event.
+  2. Paginasi (Halaman 1, 2, 3, ...) untuk mengelola daftar event yang panjang agar tidak dimuat sekaligus.
+    
         
-  2. Sorting berdasarkan:
-     1. Terpopuler (jumlah peserta terbanyak)
-     2. Tanggal terdekat
-     3. Lokasi terdekat (opsional jika ada data geolokasi)
-
-  3. Kombinasi beberapa filter sekaligus (multi-filter).
-  4. Tombol Reset Filter untuk mengembalikan tampilan semua event.
-
 ### 3. Detail Marathon
   1. Informasi utama:
      1. Nama event, deskripsi singkat
