@@ -23,9 +23,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # === INI ADALAH URL DARI BRANCH BARU (vacathon-new) ===
-    # (Kemungkinan besar ini yang menyebabkan conflict)
+    path('accounts/', include('django.contrib.auth.urls')),
     path('', include('core.urls')),
     path('events/', include('events.urls')),
     path('event-detail/', include('event_detail.urls')),
