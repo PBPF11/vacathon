@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}About Vacathon{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>About Vacathon</h1>
+    <p>Vacathon connects passionate runners with curated marathon experiences that double as unforgettable getaways.</p>
+</section>
+
+<section class="content-grid">
+    <article>
+        <h2>Our Mission</h2>
+        <p>
+            We aspire to simplify the journey from discovering unique marathon events to experiencing them first-hand.
+            Vacathon centralizes event discovery, registration, and community engagement so runners can focus on the miles ahead.
+        </p>
+        <p>
+            From tropical sunrise runs to metropolitan night races, we highlight events that blend endurance, exploration, and culture.
+        </p>
+    </article>
+
+    <aside class="sidebar">
+        <h3>Team Vacathon</h3>
+        <ul class="team-list">
+            {% for member in team_members %}
+            <li>{{ member }}</li>
+            {% endfor %}
+        </ul>
+    </aside>
+</section>
+
+<section class="values">
+    <div>
+        <h3>Community-Driven</h3>
+        <p>Built around the stories and camaraderie of runners across the globe.</p>
+    </div>
+    <div>
+        <h3>Data Smart</h3>
+        <p>Leverage rich event insights to plan runs aligned with your goals and schedule.</p>
+    </div>
+    <div>
+        <h3>Inclusive Access</h3>
+        <p>Support new organizers with tools to host safe, exciting, and sustainable events.</p>
+    </div>
+</section>
+{% endblock %}

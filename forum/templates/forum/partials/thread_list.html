@@ -1,0 +1,36 @@
+{% if threads %}
+<ul class="threads">
+    {% for thread in threads %}
+    <li class="thread-card" data-thread-slug="{{ thread.slug }}">
+        <div class="thread-meta">
+            {% if thread.is_pinned %}
+            <span class="badge accent">Pinned</span>
+            {% endif %}
+            <h2><a href="{% url 'forum:thread-detail' slug=thread.slug %}">{{ thread.title }}</a></h2>
+            <p class="subtitle">
+                In <span>{{ thread.event.title }}</span> &middot; Started by {{ thread.author.username }}
+            </p>
+        </div>
+        <dl class="stats">
+            <div>
+                <dt>Replies</dt>
+                <dd>{{ thread.post_count }}</dd>
+            </div>
+            <div>
+                <dt>Views</dt>
+                <dd>{{ thread.view_count }}</dd>
+            </div>
+            <div>
+                <dt>Last activity</dt>
+                <dd>{{ thread.last_activity_at|date:"M j, H:i" }}</dd>
+            </div>
+        </dl>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="empty-state">
+    <h3>No threads yet</h3>
+    <p>Be the first to kick off a discussion for this event.</p>
+</div>
+{% endif %}

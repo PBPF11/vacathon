@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Vacathon | Discover Your Next Run{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-text">
+        <h1>Run the world with Vacathon</h1>
+        <p>Discover, plan, and conquer unforgettable marathon adventures across breathtaking destinations.</p>
+        <div class="hero-actions">
+            {% url 'events:list' as events_url %}
+            <a class="btn primary" href="{{ events_url|default:'#' }}">Browse Events</a>
+            {% url 'event_submission:submit' as host_url %}
+            <a class="btn secondary" href="{{ host_url|default:'#' }}">Host an Event</a>
+        </div>
+    </div>
+</section>
+
+<section class="stats">
+    {% for label, value in stats.items %}
+    <div class="stat-card">
+        <p class="value">{{ value }}</p>
+        <p class="label">{{ label|capfirst }}</p>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="featured-events">
+    <header>
+        <h2>Featured Events</h2>
+        <a class="link" href="{{ events_url|default:'#' }}">See all events</a>
+    </header>
+    <div class="cards">
+        {% for event in featured_events %}
+        <article class="event-card">
+            {% with event_title=event.title|default:event.name %}
+            <h3>{{ event_title }}</h3>
+            {% if event.start_date %}
+            <p class="meta">
+                {{ event.city }}{% if event.country %}, {{ event.country }}{% endif %}
+                &middot; {{ event.start_date|date:"M j, Y" }}
+                {% with categories=event.categories.all %}
+                    {% if categories %}
+                        &middot;
+                        {% for category in categories %}
+                            {{ category.display_name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </p>
+            {% else %}
+            <p class="meta">
+                {{ event.location }}
+                {% if event.date %}&middot; {{ event.date }}{% endif %}
+                {% if event.category %}&middot; {{ event.category }}{% endif %}
+            </p>
+            {% endif %}
+            {% with detail_url=event.get_absolute_url %}
+            {% if detail_url %}
+            <a class="btn outline" href="{{ detail_url }}">View details</a>
+            {% else %}
+            <a class="btn outline" href="{{ events_url|default:'#' }}{% if events_url %}?highlight={{ event_title|urlencode }}{% endif %}">View details</a>
+            {% endif %}
+            {% endwith %}
+            {% endwith %}
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="cta">
+    <div class="cta-box">
+        <h2>Ready to share your marathon journey?</h2>
+        <p>Join the Vacathon community forum to connect with runners, swap travel tips, and stay updated with the latest events.</p>
+        {% url 'forum:index' as forum_url %}
+        <a class="btn primary" href="{{ forum_url|default:'#' }}">Join the Forum</a>
+    </div>
+</section>
+{% endblock %}
