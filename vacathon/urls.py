@@ -15,28 +15,28 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-<<<<<<< HEAD
-from django.urls import path
+from django.urls import path, include
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
-=======
-from django.urls import include, path
+# Impor ini untuk menyajikan file media (upload) saat development
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("", include("core.urls")),
-    path("events/", include("events.urls")),
-    path("", include("event_detail.urls")),
-    path("", include("registrations.urls")),
-    path("notifications/", include("notifications.urls")),
-    path("forum/", include("forum.urls")),
-    path("account/", include("profiles.urls")),
+    path('admin/', admin.site.urls),
+    
+    # === INI ADALAH URL DARI BRANCH BARU (vacathon-new) ===
+    # (Kemungkinan besar ini yang menyebabkan conflict)
+    path('', include('core.urls')),
+    path('events/', include('events.urls')),
+    path('event-detail/', include('event_detail.urls')),
+    path('forum/', include('forum.urls')),
+    path('profile/', include('profiles.urls')),
+    path('register/', include('registrations.urls')),
+    path('notifications/', include('notifications.urls')),
+    # ======================================================
 ]
 
+# Tambahkan ini di bagian bawah HANYA untuk development (DEBUG=True)
+# Ini agar server Django mau menyajikan file yang di-upload ke MEDIA_ROOT
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
->>>>>>> c42d5ec (Initial work on vacathon-new)
