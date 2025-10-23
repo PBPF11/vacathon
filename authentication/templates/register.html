@@ -1,0 +1,83 @@
+{% extends 'auth_base.html' %}
+{% block meta %}
+<title>Register | Literasea</title>
+{% endblock meta %}
+{% block content %}
+<div class="flex items-center container mx-auto h-screen font-inter">
+    <div class="hidden md:flex justify-center basis-7/12">
+        <img src="/static/img/buku_register.png" width="480px">
+    </div>
+    <div class="md:basis-5/12 my-auto mx-auto">
+        <a class="z-10" href="/"><img class="mx-auto mb-5 md:mb-8" src="/static/img/sampingwhite_480.png" width=220px/></a>
+        <div class="bg-white px-10 py-8 rounded-lg shadow-xl max-w-sm md:max-w-2xl">
+            <p class="font-gabarito font-bold text-3xl text-[#005b9c] text-center mb-8">Create an account</p>
+            <form id="reg-form" method="POST">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 gap-y-5 gap-x-4">
+                    <div>
+                        <label class="text-sm font-medium" for="id_user_type">User type:</label>
+                        <select onchange="validateSelectMsg()" class="appearance-none bg-[url('/static/img/chevron_down.svg')] bg-no-repeat bg-right bg-sm bg-origin-content border w-full rounded-lg text-sm px-3 py-2" name="user_type" id="id_user_type">
+                            <option selected value="">Choose...</option>
+                            <option value="writer">Writer</option>
+                            <option value="reader">Reader</option>
+                        </select>
+                        <p class="absolute text-xs text-red-500 pt-1" id="select-msg"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium" for="id_username">Username:</label>
+                        <div>
+                            <input oninput="validateUsernameMsg()" class="border w-full rounded-lg text-sm px-3 py-2" type="text" name="username" placeholder="username123" maxlength="150" required id="id_username"/>
+                        </div>
+                        <p class="absolute text-xs text-red-500 pt-1" id="username-msg"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium" for="id_full_name">Name:</label>
+                        <input oninput="validateFullNameMsg()" class="block border w-full rounded-lg text-sm px-3 py-2" type="text" name="full_name" placeholder="Your Name" required id="id_full_name">
+                        <p class="absolute text-xs text-red-500 pt-1" id="fullname-msg"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium" for="id_email">Email:</label>
+                        <input oninput="validateEmailMsg()" class="block border w-full rounded-lg text-sm px-3 py-2" type="email" name="email" placeholder="example@mail.com" maxlength="320" required id="id_email">
+                        <p class="absolute text-xs text-red-500 pt-1" id="email-msg"></p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium" for="id_password1">Password:</label>
+                        <div>
+                            <input oninput="validateFirstPasswordMsg()" class="block border w-full rounded-lg text-sm px-3 py-2" type="password" name="password1" autocomplete="new-password" required id="id_password1">
+                            <p id="pass1-msg" class="text-xs leading-tight pt-1">
+                                Your password must contain at least 8 characters, not entirely numeric and not too common.
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium" for="id_password2">Password confirmation:</label>
+                        <div>
+                            <input oninput="validateSecondPasswordMsg()" class="border w-full rounded-lg text-sm px-3 py-2" type="password" name="password2" autocomplete="new-password" required id="id_password2">
+                        </div>
+                        <p class="absolute text-xs text-red-500 pt-1" id="pass-msg"></p>
+                    </div>
+                </div>
+            </form>
+            {% if form.errors %}
+            <div class="errors mt-2 mb-2">
+            {% else %}
+            <div class="errors mt-10">
+            {% endif %}
+                {% if form.errors %}
+                {% for errors in form.errors.values %}
+                {% for error in errors %} 
+                <p class="text-red-500 text-xs">{{ error }}</p>
+                {% endfor %}
+                {% endfor %}
+                <p class="text-red-500 text-xs pt-3">Please try again.</p>
+                {% endif %}
+            </div>
+            <button id="submit-btn" form="reg-form" disabled class="text-sm text-[#002F6E] disabled:text-black w-full bg-[#b7d5eb] disabled:bg-gray-300 transition duration-200 hover:bg-[#80badc] rounded-lg py-2" type="submit" value="Register">Register</button>
+            <p class="text-sm pt-6 text-center">Already have an account? <a class="text-[#247FB8] hover:text-[#003F7E]" href="{% url 'authentication:login' %}">Login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+{% block script %}
+<script src="/static/js/auth_script.js"></script>
+{% endblock script %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block meta %}
+<title>Forum | Vacathon</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="min-h-screen bg-[#bbee63] py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold text-[#00134E] text-center mb-8">Marathon Forum</h1>
+
+        <!-- Choose Event Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-[#00134E] mb-4">Choose Event to Discuss</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for event in events %}
+                <a href="{% url 'forum:get_questions_by_event' event.id %}"
+                   class="block bg-[#177fda] text-white p-4 rounded-lg hover:bg-[#0d5ba8] transition-colors">
+                    <h3 class="font-bold text-lg">{{ event.name }}</h3>
+                    <p class="text-sm opacity-90">{{ event.location }} - {{ event.event_date|date:"M d, Y" }}</p>
+                    <p class="text-sm opacity-90">{{ event.distance }}</p>
+                </a>
+                {% empty %}
+                <p class="text-gray-500">No events available for discussion.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Questions -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold text-[#00134E] mb-4">Recent Questions</h2>
+            <div class="space-y-4">
+                {% for question in recent_questions %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg text-[#00134E]">{{ question.title }}</h3>
+                        {% if question.answered %}
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Answered</span>
+                        {% else %}
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Unanswered</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-600 mb-2">{{ question.question|truncatechars:150 }}</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>By {{ question.user.username }} in {{ question.event.name }}</span>
+                        <span>{{ question.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <a href="{% url 'forum:get_questions_by_event' question.event.id %}"
+                       class="inline-block mt-2 text-[#177fda] hover:text-[#0d5ba8] font-medium">
+                        View Discussion →
+                    </a>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No questions yet. Be the first to ask!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

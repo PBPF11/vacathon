@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block meta %}
+<title>My Account | Vacathon</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="min-h-screen bg-[#bbee63] py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold text-[#00134E] text-center mb-8">My Account</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Profile Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-[#00134E] mb-4">Profile</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <p class="text-lg">{{ user.userprofile.full_name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <p class="text-lg">{{ user.email }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                            <p class="text-lg">{{ user.userprofile.phone|default:"Not provided" }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">City</label>
+                            <p class="text-lg">{{ user.userprofile.city|default:"Not provided" }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Gender</label>
+                            <p class="text-lg">{{ user.userprofile.get_gender_display|default:"Not provided" }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Age</label>
+                            <p class="text-lg">{{ user.userprofile.age|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'accounts:edit_profile' %}"
+                       class="inline-block mt-4 bg-[#177fda] text-white px-4 py-2 rounded-md hover:bg-[#0d5ba8] transition-colors">
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Event Registrations -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-[#00134E] mb-4">My Event Registrations</h2>
+                    {% if registrations %}
+                    <div class="space-y-4">
+                        {% for registration in registrations %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg text-[#00134E]">{{ registration.event.name }}</h3>
+                                <span class="px-3 py-1 rounded-full text-sm font-medium
+                                    {% if registration.registration_status == 'confirmed' %}bg-green-100 text-green-800{% endif %}
+                                    {% if registration.registration_status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                                    {% if registration.registration_status == 'cancelled' %}bg-red-100 text-red-800{% endif %}">
+                                    {{ registration.get_registration_status_display }}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div>
+                                    <p><strong>Location:</strong> {{ registration.event.location }}</p>
+                                    <p><strong>Date:</strong> {{ registration.event.event_date|date:"M d, Y" }}</p>
+                                </div>
+                                <div>
+                                    <p><strong>Distance:</strong> {{ registration.event.distance }}</p>
+                                    <p><strong>BIB Number:</strong> {{ registration.bib_number|default:"Not assigned" }}</p>
+                                </div>
+                            </div>
+                            {% if registration.registration_status == 'confirmed' %}
+                            <div class="mt-4 flex gap-2">
+                                <a href="{% url 'events:event_detail' registration.event.id %}"
+                                   class="bg-[#177fda] text-white px-4 py-2 rounded-md hover:bg-[#0d5ba8] transition-colors">
+                                    View Event
+                                </a>
+                                <a href="{% url 'forum:get_questions_by_event' registration.event.id %}"
+                                   class="bg-[#bbee63] text-[#00134E] px-4 py-2 rounded-md hover:bg-[#a8d84f] transition-colors">
+                                    Join Discussion
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-center py-8">You haven't registered for any events yet.</p>
+                    <a href="{% url 'events:event_list' %}"
+                       class="inline-block bg-[#177fda] text-white px-6 py-2 rounded-md hover:bg-[#0d5ba8] transition-colors">
+                        Browse Events
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Forum Activity -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-[#00134E] mb-4">My Forum Activity</h2>
+                    {% if questions %}
+                    <div class="space-y-4">
+                        {% for question in questions %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-bold text-lg text-[#00134E] mb-2">{{ question.title }}</h3>
+                            <p class="text-gray-600 mb-2">{{ question.question|truncatechars:100 }}</p>
+                            <div class="flex justify-between items-center text-sm text-gray-500">
+                                <span>In {{ question.event.name }}</span>
+                                <span>{{ question.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <a href="{% url 'forum:get_questions_by_event' question.event.id %}"
+                               class="inline-block mt-2 text-[#177fda] hover:text-[#0d5ba8] font-medium">
+                                View Discussion →
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-gray-500 text-center py-8">You haven't posted any questions yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
