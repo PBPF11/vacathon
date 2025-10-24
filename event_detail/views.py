@@ -45,6 +45,20 @@ class EventDetailView(DetailView):
         except NoReverseMatch:
             registration_url = ""
 
+        # Import form for modal
+        from registrations.forms import RegistrationForm
+        from registrations.models import EventRegistration
+
+        # Check if user is already registered
+        existing_registration = None
+        if self.request.user.is_authenticated:
+            existing_registration = EventRegistration.objects.filter(
+                user=self.request.user, event=event
+            ).select_related("category").first()
+
+        # Create form for modal
+        form = RegistrationForm(event=event, user=self.request.user, instance=existing_registration)
+
         context.update(
             {
                 "today": today,
@@ -61,6 +75,7 @@ class EventDetailView(DetailView):
                     {"label": "Events", "url": reverse("events:list")},
                     {"label": event.title, "url": ""},
                 ],
+                "form": form,
             }
         )
         return context
