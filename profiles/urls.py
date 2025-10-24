@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 
 from .views import (
     AccountSettingsView,
@@ -18,4 +19,5 @@ urlpatterns = [
     path("api/profile/", profile_json, name="profile-json"),
     path("api/achievements/", achievements_api, name="achievements"),
     path("api/achievements/<int:achievement_id>/", delete_achievement, name="achievement-delete"),
+    path('signup/', views.signup_view, name='signup'),
 ]

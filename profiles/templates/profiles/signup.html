@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Vacathon{% endblock %}
+
+{% block extra_head %}
+<!-- 
+  Style khusus untuk halaman signup. 
+  Kita letakkan di 'extra_head' agar 'base.css' dimuat lebih dulu.
+-->
+<style>
+    .signup-container {
+        max-width: 420px;
+        margin: 3rem auto;
+        padding: 2.5rem;
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 16px 32px rgba(15, 48, 87, 0.08);
+    }
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font: inherit;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(23, 127, 218, 0.2);
+    }
+    .form-text {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 1.5rem;
+    }
+    .form-text a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    /* === BAGIAN PENTING UNTUK MENAMPILKAN ERROR === */
+    .form-error-summary {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #991b1b;
+        padding: 0.85rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+    .form-error-field {
+        color: #dc2626;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+    .form-control.is-invalid {
+        border-color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="signup-container">
+    <h1 style="text-align: center; margin-bottom: 2rem;">Create your account</h1>
+
+    <!-- Menampilkan error global (jika ada) -->
+    {% if form.non_field_errors %}
+        <div class="form-error-summary">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'profiles:signup' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" class="form-control {% if form.username.errors %}is-invalid{% endif %}" required>
+            {% if form.username.errors %}
+                <div class="form-error-field">{{ form.username.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_first_name">First Name</label>
+            <input type="text" name="first_name" id="id_first_name" class="form-control {% if form.first_name.errors %}is-invalid{% endif %}">
+            {% if form.first_name.errors %}
+                <div class="form-error-field">{{ form.first_name.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_last_name">Last Name</label>
+            <input type="text" name="last_name" id="id_last_name" class="form-control {% if form.last_name.errors %}is-invalid{% endif %}">
+            {% if form.last_name.errors %}
+                <div class="form-error-field">{{ form.last_name.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_email">Email Address</label>
+            <input type="email" name="email" id="id_email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" required>
+            {% if form.email.errors %}
+                <div class="form-error-field">{{ form.email.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
+        <!-- 
+          INI PERBAIKANNYA: 
+          name="password" -> name="password1"
+          id="id_password" -> id="id_password1"
+          form.password.errors -> form.password1.errors
+        -->
+        <div class="form-group">
+            <label for="id_password1">Password</label>
+            <input type="password" name="password1" id="id_password1" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+            {% if form.password1.errors %}
+                <div class="form-error-field">
+                    <!-- Kita tampilkan error password1 secara manual agar lebih jelas -->
+                    {% for error in form.password1.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_password2">Confirm Password</label>
+            <input type="password" name="password2" id="id_password2" class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+            {% if form.password2.errors %}
+                <div class="form-error-field">
+                    <!-- Kita tampilkan error password2 secara manual -->
+                    {% for error in form.password2.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn primary" style="width: 100%; padding: 0.85rem;">
+            Create Account
+        </button>
+    </form>
+    
+    <p class="form-text">
+        Sudah punya akun? <a href="{% url 'login' %}">Sign In</a>
+    </p>
+</div>
+{% endblock %}
+

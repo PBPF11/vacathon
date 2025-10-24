@@ -5,33 +5,80 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Vacathon{% endblock %}</title>
+    
+    <!-- INI ADALAH FILE CSS ASLI-MU. INI YANG PENTING. -->
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     <header class="site-header">
         <nav class="navbar">
+            
+            <!-- KIRI: BRAND/LOGO -->
             {% url 'core:home' as home_url %}
             <a class="brand" href="{{ home_url|default:'#' }}">Vacathon</a>
+            
+            <!-- TENGAH: LINK NAVIGASI UTAMA -->
             <div class="nav-links">
                 <a href="{{ home_url|default:'#' }}">Home</a>
+                
                 {% url 'events:list' as events_url %}
                 <a href="{{ events_url|default:'#' }}">Events</a>
+                
                 {% url 'forum:index' as forum_url %}
                 <a href="{{ forum_url|default:'#' }}">Forum</a>
-                {% url 'profiles:dashboard' as dashboard_url %}
-                <a href="{{ dashboard_url|default:'#' }}">My Account</a>
-                {% url 'registrations:mine' as registrations_url %}
-                <a href="{{ registrations_url|default:'#' }}">My Registrations</a>
-                {% url 'notifications:inbox' as notifications_url %}
-                <a href="{{ notifications_url|default:'#' }}">
-                    Notifications{% if notifications_unread_count %} ({{ notifications_unread_count }}){% endif %}
-                </a>
+                
+                <!-- === INI ADALAH PERBAIKANNYA === -->
+                <!-- TAMPILKAN LINK KHUSUS USER DI SINI (TENGAH) -->
+                {% if user.is_authenticated %}
+                    {% url 'profiles:dashboard' as dashboard_url %}
+                    <a href="{{ dashboard_url|default:'#' }}">My Account</a>
+                    
+                    {% url 'registrations:mine' as registrations_url %}
+                    <a href="{{ registrations_url|default:'#' }}">My Registrations</a>
+                    
+                    {% url 'notifications:inbox' as notifications_url %}
+                    <a href="{{ notifications_url|default:'#' }}">
+                        Notifications{% if notifications_unread_count %} ({{ notifications_unread_count }}){% endif %}
+                    </a>
+                {% endif %}
+                <!-- === AKHIR PERBAIKAN === -->
+                
                 {% url 'core:about' as about_url %}
                 <a href="{{ about_url|default:'#' }}">About</a>
             </div>
+
+            <!-- KANAN: BLOK OTENTIKASI -->
+            <div class="nav-auth">
+                {% if user.is_authenticated %}
+                    <!-- HANYA TAMPILKAN INFO USER & LOGOUT DI SINI -->
+                    <span class="nav-welcome" style="margin-right: 10px;">
+                        Welcome, {{ user.first_name|default:user.username }}!
+                    </span>
+                    
+                    <!-- Form Logout (mengirim POST request) -->
+                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <!-- Gunakan class 'nav-button' atau 'btn outline' (sesuaikan) -->
+                        <button type="submit" class="btn outline" style="padding: 0.35rem 0.85rem; font-size: 0.9rem;">
+                            Logout
+                        </button>
+                    </form>
+                    
+                {% else %}
+                    <!-- Tombol Sign In / Sign Up (saat belum login) -->
+                    <a href="{% url 'login' %}" class="btn outline" style="padding: 0.35rem 0.85rem; font-size: 0.9rem; margin-left: 10px;">
+                        Sign In
+                    </a>
+                    <a href="{% url 'profiles:signup' %}" class="btn primary" style="padding: 0.35rem 0.85rem; font-size: 0.9rem; margin-left: 10px;">
+                        Sign Up
+                    </a>
+                {% endif %}
+            </div>
         </nav>
     </header>
+    
     <main class="main-content">
         {% if messages %}
         <div class="messages">
@@ -42,10 +89,14 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+    
     <footer class="site-footer">
         <p>&copy; {{ current_year|default:2025 }} Vacathon. All rights reserved.</p>
     </footer>
+    
+    <!-- MEMUAT FILE JS ASLI-MU -->
     <script src="{% static 'js/main.js' %}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
+

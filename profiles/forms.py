@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
 from .models import RunnerAchievement, UserProfile
 
@@ -66,3 +68,35 @@ class AccountPasswordForm(PasswordChangeForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "control"
+
+class SignUpForm(UserCreationForm):
+    """
+    Form kustom untuk sign up, menambahkan field email, nama depan, dan nama belakang.
+    """
+    email = forms.EmailField(
+        max_length=254, 
+        required=True, 
+        help_text='Required. Inform a valid email address.',
+        widget=forms.EmailInput(attrs={'placeholder': 'Enter your email'})
+    )
+    first_name = forms.CharField(
+        max_length=30, 
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'First Name'})
+    )
+    last_name = forms.CharField(
+        max_length=30, 
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Last Name'})
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name')
+
+    def __init__(self, *args, **kwargs):
+        super(SignUpForm, self).__init__(*args, **kwargs)
+        # Membuat placeholder untuk field username & password
+        self.fields['username'].widget.attrs['placeholder'] = 'Choose a username'
+        self.fields['password1'].widget.attrs['placeholder'] = 'Enter password'
+        self.fields['password2'].widget.attrs['placeholder'] = 'Confirm password'

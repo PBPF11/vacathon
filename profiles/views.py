@@ -1,11 +1,12 @@
 import json
-
+from django.contrib.auth import login
+from .forms import SignUpForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView, UpdateView
@@ -17,6 +18,20 @@ from .forms import (
 )
 from .models import RunnerAchievement, UserProfile
 
+def signup_view(request):
+    """
+    Menangani logika untuk pendaftaran user baru.
+    """
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()  # Simpan user baru ke database
+            login(request, user)  # Langsung login-kan user
+            return redirect('core:home')  # Arahkan ke homepage (asumsi URL name='home')
+    else:
+        form = SignUpForm()
+    
+    return render(request, 'profiles/signup.html', {'form': form})
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "profiles/dashboard.html"

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - Vacathon{% endblock %}
+
+{% block extra_head %}
+<!-- 
+  Style ini khusus untuk halaman login.
+  Kita tambahkan di 'extra_head' agar tidak mengganggu file CSS utamamu.
+  Style ini menggunakan variabel (--white, --primary) dari 'base.css' agar desainnya konsisten.
+-->
+<style>
+    .login-container {
+        max-width: 450px;
+        margin: 3rem auto;
+        padding: 2.5rem;
+        background: var(--white);
+        border-radius: 18px;
+        box-shadow: 0 18px 32px rgba(23, 127, 218, 0.12);
+    }
+    .login-container h1 {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 2rem;
+        color: var(--dark);
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+    }
+    /* Menggunakan class .control dari base.css-mu untuk styling input */
+    .form-group input.control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .login-actions {
+        margin-top: 2rem;
+    }
+    .login-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #555;
+    }
+    .login-footer a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Sign In to your account</h1>
+
+    {% if form.errors %}
+        <!-- Menggunakan class .message.error dari base.css-mu -->
+        <div class="message error">
+            Username atau password salah. Silakan coba lagi.
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_username">Username</label>
+            <!-- Menambahkan class .control -->
+            <input type="text" name="username" id="id_username" class="control" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_password">Password</label>
+            <!-- Menambahkan class .control -->
+            <input type="password" name="password" id="id_password" class="control" required>
+        </div>
+        
+        <div class="login-actions">
+            <!-- Menggunakan class .btn.primary dari base.css-mu -->
+            <button type="submit" class="btn primary" style="width: 100%;">Sign In</button>
+        </div>
+    </form>
+
+    <div class="login-footer">
+        <p>Belum punya akun? <a href="{% url 'profiles:signup' %}">Sign Up</a></p>
+    </div>
+</div>
+{% endblock %}
+
