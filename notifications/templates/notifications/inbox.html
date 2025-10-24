@@ -23,7 +23,7 @@
     {% if notifications %}
     <ul class="notification-list">
         {% for note in notifications %}
-        <li class="{% if not note.is_read %}unread{% endif %}" data-notification-id="{{ note.id }}">
+        <li class="{% if not note.is_read %}unread{% endif %}{% if 'cancelled' in note.title|lower or 'cancelled' in note.message|lower %} cancelled{% endif %}" data-notification-id="{{ note.id }}">
             <div>
                 <h2>{{ note.title }}</h2>
                 <p>{{ note.message }}</p>

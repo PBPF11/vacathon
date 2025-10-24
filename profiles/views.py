@@ -1,24 +1,38 @@
 import json
-from django.template.loader import render_to_string
-from django.http import HttpResponseRedirect, JsonResponse
+
 from forum.models import ForumThread, ForumPost, PostReport
 from .forms import EventForm, ProfileForm, AccountSettingsForm, ProfileAchievementForm
 from django.db.models import Count
-from .models import UserRaceHistory, RunnerAchievement, UserProfile
-from events.models import Event, EventCategory
+from .models import UserRaceHistory
+from events.models import Event
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import user_passes_test
 from django.utils.decorators import method_decorator
-from django.views.generic import TemplateView, UpdateView
-from core import models # Dipertahankan karena ada di impor Anda sebelumnya
+from django.views.generic import TemplateView
+from core import models
+from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
+from django.views.generic import TemplateView, UpdateView
+from .forms import (
+    AccountPasswordForm,
+    AccountSettingsForm,
+    ProfileAchievementForm,
+    ProfileForm,
+    EventForm,
+)
+from .models import RunnerAchievement, UserProfile
+from events.models import Event, EventCategory
+from profiles.models import UserProfile, UserRaceHistory
 
 
 def is_admin(user):
@@ -36,46 +50,19 @@ def admin_event_list(request):
 @login_required
 @user_passes_test(admin_required)
 def admin_event_add(request):
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    is_partial = request.GET.get('partial') == 'true'
-
     if request.method == "POST":
         form = EventForm(request.POST)
         if form.is_valid():
             form.save()
-            if is_ajax:
-                return JsonResponse({
-                    'status': 'success',
-                    'message': 'Event created successfully!',
-                }, status=201)
             messages.success(request, "Event created successfully")
             return redirect("profiles:admin-event-list")
         else:
-            if is_ajax:
-                context = {"form": form, "title": "Add Event"}
-                html_form = render_to_string("profiles/admin_event_form_partial.html", context, request=request)
-                
-                return JsonResponse({
-                    'status': 'error',
-                    'form_html': html_form,
-                    'message': 'Form validation failed.',
-                }, status=400)
-            
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-            return render(request, "profiles/admin_event_form.html", {"form": form, "title": "Add Event"})
-    
-    # Handle GET request
-    form = EventForm()
-    context = {"form": form, "title": "Add Event"}
-    
-    if is_partial:
-        # Mengembalikan HTML murni untuk modal AJAX
-        return render(request, "profiles/admin_event_form_partial.html", context)
-    
-    # Fallback untuk GET non-AJAX
-    return render(request, "profiles/admin_event_form.html", context)
+    else:
+        form = EventForm()
+    return render(request, "profiles/admin_event_form.html", {"form": form, "title": "Add Event"})
 
 @login_required
 @user_passes_test(admin_required)
@@ -109,7 +96,7 @@ class AdminDashboardView(TemplateView):
         
         total_peserta = UserRaceHistory.objects.count()
         total_event = Event.objects.count()
-        event_aktif = Event.objects.filter(status="upcoming").count()
+        event_aktif = Event.objects.filter(status="upcoming").count()  # sesuai Event.Status
         event_selesai = Event.objects.filter(status="completed").count()
         
         peserta_per_event = (
@@ -144,6 +131,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            # Redirect berbeda berdasarkan role
             if user.is_staff:
                 return redirect("profiles:admin-dashboard")
             return redirect("profiles:dashboard")
@@ -338,13 +326,13 @@ def achievements_api(request):
                 "achievement": {
                     "id": achievement.id,
                     "title": achievement.title,
-                    "description": achievement.description,
-                    "achieved_on": achievement.achieved_on.isoformat()
-                    if achievement.achieved_on
-                    else None,
-                    "link": achievement.link,
-                    "delete_url": reverse("profiles:achievement-delete", args=[achievement.id]),
-                },
+                "description": achievement.description,
+                "achieved_on": achievement.achieved_on.isoformat()
+                if achievement.achieved_on
+                else None,
+                "link": achievement.link,
+                "delete_url": reverse("profiles:achievement-delete", args=[achievement.id]),
+            },
             },
             status=201,
         )
@@ -364,6 +352,7 @@ def delete_achievement(request, achievement_id):
 @login_required
 @user_passes_test(is_admin)
 def admin_participant_list(request):
+    """Kelola semua peserta dari semua event"""
     participants = UserRaceHistory.objects.select_related(
         'profile__user', 'event'
     ).all().order_by('-registration_date')
@@ -379,11 +368,24 @@ def admin_participant_list(request):
 def admin_participant_confirm(request, participant_id):
     if request.method == "POST":
         participant = get_object_or_404(UserRaceHistory, id=participant_id)
-        participant.status = UserRaceHistory.Status.REGISTERED
+        participant.status = UserRaceHistory.Status.UPCOMING  # Changed to UPCOMING to match CONFIRMED sync
+        # Generate BIB number kalau belum ada
         if not participant.bib_number:
+            # Simple BIB generation: EVENT_ID + USER_ID + random
             import random
             participant.bib_number = f"{participant.event.id}{participant.profile.user.id}{random.randint(100, 999)}"
         participant.save()
+
+        # Also update the EventRegistration status to CONFIRMED
+        from registrations.models import EventRegistration
+        registration = EventRegistration.objects.filter(
+            user=participant.profile.user,
+            event=participant.event
+        ).first()
+        if registration:
+            registration.status = EventRegistration.Status.CONFIRMED
+            registration.save()
+
         messages.success(request, f"Participant {participant.profile.full_display_name} confirmed!")
     return redirect('profiles:admin-participant-list')
 
@@ -391,16 +393,40 @@ def admin_participant_confirm(request, participant_id):
 @login_required
 @user_passes_test(is_admin)
 def admin_participant_delete(request, participant_id):
+    """Hapus peserta"""
     if request.method == "POST":
         participant = get_object_or_404(UserRaceHistory, id=participant_id)
+        # Also delete the EventRegistration
+        from registrations.models import EventRegistration
+        registration = EventRegistration.objects.filter(
+            user=participant.profile.user,
+            event=participant.event
+        ).first()
+        if registration:
+            # Send cancellation notification before deleting
+            from notifications.utils import send_notification
+            from notifications.models import Notification
+            detail_kwargs = {"reference": registration.reference_code}
+            send_notification(
+                recipient=registration.user,
+                title=f"Registration cancelled - {registration.event.title}",
+                message="Your registration has been cancelled by an administrator. Contact support for more details.",
+                category=Notification.Category.REGISTRATION,
+                url_name="registrations:detail",
+                url_kwargs=detail_kwargs,
+            )
+            registration.delete()
         participant.delete()
         messages.success(request, "Participant deleted successfully!")
     return redirect('profiles:admin-participant-list')
 
 
+
+
 @login_required
 @user_passes_test(is_admin)
 def admin_forum(request):
+
     reported_posts = PostReport.objects.filter(
         resolved=False
     ).select_related(
@@ -409,6 +435,7 @@ def admin_forum(request):
         'reporter'
     ).prefetch_related('post__reports').order_by('-created_at')
     
+    # Get all posts with their report count
     posts_with_reports = []
     seen_posts = set()
     
@@ -437,6 +464,7 @@ def admin_forum_delete(request, post_id):
         
         post.reports.all().update(resolved=True)
         author_username = post.author.username
+        # Delete the post
         post.delete()
 
         messages.success(request, f"Post by {author_username} has been deleted!")
@@ -450,6 +478,7 @@ def admin_forum_pinned(request, post_id):
         post = get_object_or_404(ForumPost, id=post_id)
         thread = post.thread
         
+        # Toggle pin status
         thread.is_pinned = not thread.is_pinned
         thread.save()
         

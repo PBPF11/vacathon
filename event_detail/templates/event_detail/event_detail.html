@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+{% include "registrations/modal_form.html" %}
 <nav class="breadcrumb">
     {% for crumb in breadcrumbs %}
     <a href="{{ crumb.url|default:'#' }}" {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.label }}</a>
@@ -92,7 +93,7 @@
             <span>Deadline: {{ event.registration_deadline|date:"M j, Y" }}</span>
         </div>
         {% if registration_cta_url %}
-        <a class="btn primary" href="{{ registration_cta_url }}">Proceed to Registration</a>
+        <button class="btn primary" type="button" data-open-registration-modal>Proceed to Registration</button>
         {% else %}
         <button class="btn primary" type="button" disabled>Registration Module Coming Soon</button>
         {% endif %}

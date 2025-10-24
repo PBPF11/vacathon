@@ -1,8 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("Event detail JS loaded");
     const container = document.querySelector(".event-overview");
     if (!container) {
+        console.log("Event overview container not found");
         return;
     }
+    console.log("Event overview container found");
 
     const detailEndpoint = container.dataset.detailEndpoint;
     const availabilityEndpoint = container.dataset.availabilityEndpoint;
@@ -14,6 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const availabilityLabel = container.querySelector("[data-availability-label]");
     const progressBar = container.querySelector(".progress-bar");
     const progressFill = container.querySelector(".progress-fill");
+
+    // Modal elements
+    const modal = document.getElementById("registration-modal");
+    const openModalBtn = document.querySelector("[data-open-registration-modal]");
+    const closeModalBtn = document.querySelector("[data-close-modal]");
+    const registrationForm = document.getElementById("modal-registration-form");
 
     const formatDate = (isoString, options = {}) => {
         if (!isoString) {
@@ -160,6 +169,126 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
     };
+
+    // Modal functionality
+    const showModal = () => {
+        if (modal) {
+            modal.style.display = "flex";
+            document.body.style.overflow = "hidden";
+            console.log("Modal shown");
+        }
+    };
+
+    const hideModal = () => {
+        if (modal) {
+            modal.style.display = "none";
+            document.body.style.overflow = "";
+            console.log("Modal hidden");
+        }
+    };
+
+    const handleFormSubmit = (event) => {
+        event.preventDefault();
+        const formData = new FormData(registrationForm);
+        const submitBtn = registrationForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+
+        // Disable submit button and show loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+
+        // Get the event slug from the URL or data attribute
+        const eventSlug = container.dataset.eventSlug || window.location.pathname.split('/').filter(Boolean)[1];
+        console.log("Event slug:", eventSlug);
+
+        fetch(`/register/events/${eventSlug}/register/ajax/`, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            console.log("Response status:", response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Response data:", data);
+            if (data.success) {
+                // Success - redirect to registration detail
+                window.location.href = data.registration_url;
+            } else {
+                // Handle errors
+                const formElement = document.getElementById("modal-registration-form");
+                // Clear previous errors
+                formElement.querySelectorAll('.error').forEach(el => el.remove());
+
+                // Show non-field errors
+                if (data.non_field_errors && data.non_field_errors.length > 0) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = data.non_field_errors.join('<br>');
+                    formElement.insertBefore(errorDiv, formElement.firstChild);
+                }
+
+                // Show field errors
+                for (const [fieldName, errors] of Object.entries(data.errors || {})) {
+                    const field = formElement.querySelector(`[name="${fieldName}"]`);
+                    if (field) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error';
+                        errorDiv.innerHTML = errors.join('<br>');
+                        field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error("Registration submission error:", error);
+            alert("An error occurred while submitting your registration. Please try again.");
+        })
+        .finally(() => {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+    };
+
+    // Event listeners
+    if (openModalBtn) {
+        console.log("Open modal button found:", openModalBtn);
+        openModalBtn.addEventListener("click", showModal);
+    } else {
+        console.log("Open modal button not found");
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", hideModal);
+    }
+
+    if (modal) {
+        // Close modal when clicking outside
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                hideModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && modal.style.display === "flex") {
+                hideModal();
+            }
+        });
+    }
+
+    if (registrationForm) {
+        registrationForm.addEventListener("submit", handleFormSubmit);
+    }
 
     fetchDetail();
     updateAvailability();
