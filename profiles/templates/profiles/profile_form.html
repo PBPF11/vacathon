@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/profiles.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Edit Profile</h1>
+    <p>Keep your runner profile up to date so fellow athletes can connect.</p>
+</section>
+
+<form method="post" class="profile-form layout-section layout-surface">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+    <div class="field">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+        <p class="help-text">{{ field.help_text }}</p>
+        {% endif %}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
+    <div class="actions">
+        <button class="btn primary" type="submit">Save changes</button>
+        <a class="btn secondary" href="{% url 'profiles:dashboard' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

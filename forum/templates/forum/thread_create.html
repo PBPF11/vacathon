@@ -1,0 +1,40 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Start a New Thread | Vacathon Forum{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/forum.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Start a new discussion</h1>
+    <p>Share tips, build hype, and help runners prepare for the big day.</p>
+</section>
+
+<form method="post" class="thread-form layout-section layout-surface">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="field">
+        {{ form.event.label_tag }}
+        {{ form.event }}
+        {{ form.event.errors }}
+    </div>
+    <div class="field">
+        {{ form.title.label_tag }}
+        {{ form.title }}
+        {{ form.title.errors }}
+    </div>
+    <div class="field">
+        {{ form.body.label_tag }}
+        {{ form.body }}
+        {{ form.body.errors }}
+    </div>
+    <div class="actions">
+        <button class="btn primary" type="submit">Publish thread</button>
+        <a class="btn secondary" href="{% url 'forum:index' %}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

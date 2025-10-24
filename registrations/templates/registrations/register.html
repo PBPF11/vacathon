@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Register for {{ event.title }} | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/registrations.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Register for {{ event.title }}</h1>
+    <p>Secure your slot and get ready for an unforgettable run.</p>
+</section>
+
+<section class="registration-layout layout-section layout-section--flush"
+         data-capacity="{{ event_capacity.limit|default:0 }}"
+         data-registered="{{ event_capacity.registered|default:0 }}"
+         data-endpoint="{% url 'registrations:mine-json' %}"
+         data-availability-url="{% url 'event_detail:availability-json' slug=event.slug %}">
+    <aside class="event-summary">
+        <h2>Event snapshot</h2>
+        <ul>
+            <li><strong>Date:</strong> {{ event.start_date|date:"M j, Y" }}</li>
+            {% if event.end_date %}
+            <li><strong>Ends:</strong> {{ event.end_date|date:"M j, Y" }}</li>
+            {% endif %}
+            <li><strong>Location:</strong> {{ event.city }}, {{ event.country }}</li>
+            <li><strong>Capacity:</strong>
+                {% if event_capacity.limit %}
+                    {{ event_capacity.registered }} / {{ event_capacity.limit }} runners
+                {% else %}
+                    Unlimited slots
+                {% endif %}
+            </li>
+            {% if event_capacity.remaining is not None %}
+            <li><strong>Remaining slots:</strong> <span data-remaining-slots>{{ event_capacity.remaining }}</span></li>
+            {% endif %}
+        </ul>
+        <a class="btn outline" href="{{ event.get_absolute_url }}">Back to event detail</a>
+    </aside>
+
+    <div class="registration-body">
+        {% if existing_registration %}
+        <div class="notice">
+            <h3>You already registered</h3>
+            <p>
+                Your registration ({{ existing_registration.get_status_display }}) is on record.
+                You may update your emergency contact details below.
+            </p>
+            <a class="btn secondary" href="{% url 'registrations:detail' reference=existing_registration.reference_code %}">
+                View registration summary
+            </a>
+        </div>
+        {% endif %}
+
+        <form method="post" class="registration-form" id="registration-form">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+            <div class="field">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                <p class="help-text">{{ field.help_text }}</p>
+                {% endif %}
+                {{ field.errors }}
+            </div>
+            {% endfor %}
+            <div class="actions">
+                <button class="btn primary" type="submit">Submit registration</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/registrations.js' %}"></script>
+{% endblock %}

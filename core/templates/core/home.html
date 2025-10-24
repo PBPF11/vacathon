@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Vacathon | Home{% endblock %}
+
+{% block content %}
+<section class="why-run">
+    <div class="why-lead">
+        <h2>Why run with Vacathon?</h2>
+        <p>
+            Vacathon curates destination-worthy races, organizes community support,
+            and streamlines your travel so you can focus on the miles ahead.
+        </p>
+    </div>
+    <div class="reason-list">
+        {% for reason in highlight_reasons %}
+        <article class="reason-card">
+            <div class="reason-icon">{{ reason.icon }}</div>
+            <div>
+                <h3>{{ reason.title }}</h3>
+                <p>{{ reason.description }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="highlight-banner">
+    <div class="banner-main">
+        <span class="banner-eyebrow">
+            {% if highlight_event %}
+            Highlight Event
+            {% else %}
+            Find Your Next Marathon
+            {% endif %}
+        </span>
+        <h2>
+            {% if highlight_event %}
+            {{ highlight_event.title }}
+            {% else %}
+            Discover the race that fits your travel and training goals
+            {% endif %}
+        </h2>
+        <p>{{ highlight_summary }}</p>
+
+        <ul class="banner-meta">
+            {% if highlight_event and highlight_event.city %}
+            <li>
+                <span class="meta-label">Location</span>
+                <span>{{ highlight_event.city }}{% if highlight_event.country %}, {{ highlight_event.country }}{% endif %}</span>
+            </li>
+            {% endif %}
+            {% if highlight_event and highlight_event.start_date %}
+            <li>
+                <span class="meta-label">Race Day</span>
+                <span>{{ highlight_event.start_date|date:"j F Y" }}</span>
+            </li>
+            {% endif %}
+            {% if highlight_event and highlight_event.registration_deadline %}
+            <li>
+                <span class="meta-label">Registration Closes</span>
+                <span>{{ highlight_event.registration_deadline|date:"j F Y" }}</span>
+            </li>
+            {% endif %}
+        </ul>
+
+        <div class="banner-actions">
+            {% if highlight_cta_url %}
+            <a class="btn primary" href="{{ highlight_cta_url }}">Register Now</a>
+            {% endif %}
+            {% if highlight_detail_url %}
+            <a class="btn outline" href="{{ highlight_detail_url }}">View Event</a>
+            {% elif events_list_url %}
+            <a class="btn outline" href="{{ events_list_url }}">Explore Events</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="banner-media">
+        {% if highlight_event and highlight_event.banner_image %}
+        <img src="{{ highlight_event.banner_image }}" alt="{{ highlight_event.title }} banner">
+        {% else %}
+        <div class="banner-placeholder">
+            <span>Ready to chase a new personal best?</span>
+        </div>
+        {% endif %}
+        {% if highlight_event %}
+        <div class="banner-tags">
+            {% with categories=highlight_event.categories.all %}
+            {% if categories %}
+                {% for category in categories %}
+                <span class="tag">{{ category.display_name }}</span>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="marathon-map">
+    <header>
+        <h2>Featured Marathon Route</h2>
+        <p>Preview the surrounding area and start planning your travel logistics.</p>
+    </header>
+    <div class="map-wrapper">
+        <iframe
+            src="{{ marathon_map_url }}"
+            title="Marathon location map"
+            loading="lazy"
+            allowfullscreen
+        ></iframe>
+    </div>
+</section>
+
+<section class="news-video">
+    <header>
+        <h2>Latest Marathon News</h2>
+        <p>Stay inspired with coverage from the running world.</p>
+    </header>
+    <div class="video-wrapper">
+        <iframe
+            src="{{ news_video_url }}"
+            title="Marathon news highlight"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+        ></iframe>
+    </div>
+</section>
+
+<section class="stats">
+    {% for stat in stats %}
+    <div class="stat-card">
+        <p class="value">{{ stat.value }}</p>
+        <p class="label">{{ stat.label }}</p>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="upcoming-events">
+    <header>
+        <h2>Other Events</h2>
+        {% if events_list_url %}
+        <a class="inline-link" href="{{ events_list_url }}">See all events</a>
+        {% endif %}
+    </header>
+    <div class="cards">
+        {% if upcoming_events %}
+        {% for event in upcoming_events %}
+        <article class="event-card">
+            <h3>{{ event.title }}</h3>
+            <p class="meta">
+                {% if event.city %}
+                {{ event.city }}{% if event.country %}, {{ event.country }}{% endif %}
+                {% endif %}
+                {% if event.start_date %}
+                &middot; {{ event.start_date|date:"j M Y" }}
+                {% endif %}
+            </p>
+            <div class="tags">
+                {% for category in event.categories.all %}
+                <span class="tag">{{ category.display_name }}</span>
+                {% empty %}
+                <span class="tag tag-muted">Categories announced soon</span>
+                {% endfor %}
+            </div>
+            {% with detail_url=event.get_absolute_url %}
+            <a class="btn outline" href="{{ detail_url|default:events_list_url }}">View Details</a>
+            {% endwith %}
+        </article>
+        {% endfor %}
+        {% else %}
+        <p class="empty-state">No additional events to show just yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="community-cta">
+    <div class="cta-box">
+        <h2>Connect with fellow runners</h2>
+        <p>Join the Vacathon forum to share training tips, swap stories, and meet your next race crew.</p>
+        {% url 'forum:index' as forum_url %}
+        <a class="btn primary" href="{{ forum_url|default:'#' }}">Visit the Forum</a>
+    </div>
+</section>
+{% endblock %}

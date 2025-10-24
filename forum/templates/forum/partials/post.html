@@ -1,0 +1,26 @@
+
+{% load humanize %}
+<article class="post {% if is_reply %}reply{% endif %}" data-post-id="{{ post.id }}"{% if post.parent_id %} data-parent-id="{{ post.parent_id }}"{% endif %}>
+    <header>
+        <div>
+            <strong>{{ post.author.username }}</strong>
+            <span class="timestamp">{{ post.created_at|naturaltime }}</span>
+        </div>
+        {% if post.parent %}
+        <span class="reply-label">Reply to {{ post.parent.author.username }}</span>
+        {% endif %}
+    </header>
+    <p>{{ post.content|linebreaksbr }}</p>
+    <footer>
+        {% if user.is_authenticated %}
+        <button class="link-button like-button" data-like-endpoint="{% url 'forum:post-like' post_id=post.id %}">
+            <span class="like-label">{% if user in post.likes.all %}Unlike{% else %}Like{% endif %}</span>
+            (<span class="like-count">{{ post.like_count }}</span>)
+        </button>
+        <button class="link-button reply-button" data-post-id="{{ post.id }}">Reply</button>
+        <button class="link-button report-button" data-report-endpoint="{% url 'forum:post-report' post_id=post.id %}">Report</button>
+        {% else %}
+        <span class="like-count">{{ post.like_count }} likes</span>
+        {% endif %}
+    </footer>
+</article>
