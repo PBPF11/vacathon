@@ -211,9 +211,6 @@ Visi kami adalah menjadikan Vacathon sebagai destinasi utama bagi komunitas pela
 
 
 
-  
-
-
 
 ## 6. Tautan deployment PWS dan link design
 ### Link Deployment

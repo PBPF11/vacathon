@@ -53,6 +53,16 @@
                     <dd>{{ event.venue|default:"TBA" }}</dd>
                 </div>
                 <div>
+                    <dt>Registration opens</dt>
+                    <dd>
+                        {% if event.registration_open_date %}
+                            {{ event.registration_open_date|date:"M j, Y" }}
+                        {% else %}
+                            TBA
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
                     <dt>Registration closes</dt>
                     <dd>{{ event.registration_deadline|date:"M j, Y" }}</dd>
                 </div>
@@ -89,6 +99,9 @@
             <span data-capacity-remaining>{{ remaining_slots }} slots remaining</span>
             {% endif %}
             <span data-capacity-ratio>{{ capacity_ratio }}% capacity</span>
+            {% if event.registration_open_date %}
+            <span>Opened: {{ event.registration_open_date|date:"M j, Y" }}</span>
+            {% endif %}
             <span>Deadline: {{ event.registration_deadline|date:"M j, Y" }}</span>
         </div>
         {% if registration_cta_url %}
@@ -98,6 +111,19 @@
         {% endif %}
         {% if forum_threads_url %}
         <a class="btn outline" href="{{ forum_threads_url }}">Discuss this event on the forum</a>
+        {% endif %}
+        {% if marathon_map_url %}
+        <div class="registration-map">
+            <iframe
+                src="{{ marathon_map_url }}"
+                width="100%"
+                height="260"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
         {% endif %}
     </section>
 

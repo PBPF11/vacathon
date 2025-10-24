@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -57,6 +59,7 @@ class EventDetailView(DetailView):
                 "is_registration_open": event.is_registration_open,
                 "registration_cta_url": registration_url,
                 "forum_threads_url": f"{reverse('forum:index')}?event={event.id}",
+                "marathon_map_url": self._build_map_url(event),
                 "breadcrumbs": [
                     {"label": "Events", "url": reverse("events:list")},
                     {"label": event.title, "url": ""},
@@ -64,6 +67,20 @@ class EventDetailView(DetailView):
             }
         )
         return context
+
+    @staticmethod
+    def _build_map_url(event: Event) -> str:
+        parts = []
+        if event.venue:
+            parts.append(event.venue)
+        if event.city:
+            parts.append(event.city)
+        if event.country:
+            parts.append(event.country)
+        if not parts:
+            return ""
+        query = quote_plus(" ".join(parts) + " marathon")
+        return f"https://www.google.com/maps?q={query}&output=embed"
 
 
 @require_GET
@@ -87,11 +104,15 @@ def event_detail_json(request, slug):
         "flag_off": event.start_date.isoformat(),
         "cut_off": event.end_date.isoformat() if event.end_date else None,
         "registration_deadline": event.registration_deadline.isoformat(),
+        "registration_open_date": event.registration_open_date.isoformat()
+        if event.registration_open_date
+        else None,
         "status": event.status,
         "status_display": event.get_status_display(),
         "participant_limit": event.participant_limit,
         "registered_count": event.registered_count,
         "is_registration_open": event.is_registration_open,
+        "map_url": EventDetailView._build_map_url(event),
         "categories": [
             {
                 "id": category.id,
@@ -161,6 +182,9 @@ def event_availability_json(request, slug):
             "capacity_ratio": capacity_ratio,
             "is_registration_open": event.is_registration_open,
             "registration_deadline": event.registration_deadline.isoformat(),
+            "registration_open_date": event.registration_open_date.isoformat()
+            if event.registration_open_date
+            else None,
             "status": event.status,
         }
     )

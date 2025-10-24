@@ -33,6 +33,7 @@ class Event(models.Model):
     venue = models.CharField(max_length=150, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
+    registration_open_date = models.DateField(blank=True, null=True)
     registration_deadline = models.DateField()
     status = models.CharField(
         max_length=20,
@@ -81,7 +82,11 @@ class Event(models.Model):
         from django.utils import timezone
 
         today = timezone.localdate()
-        return self.registration_deadline >= today and self.status != self.Status.COMPLETED
+        open_date = self.registration_open_date or today
+        return (
+            open_date <= today <= self.registration_deadline
+            and self.status != self.Status.COMPLETED
+        )
 
     @property
     def duration_days(self) -> int | None:
