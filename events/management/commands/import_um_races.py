@@ -58,64 +58,94 @@ class EventRecord:
         return self.base_name
 
     def build_description(self) -> str:
-        def _format_distance_labels(labels: list[str]) -> str:
-            if not labels:
-                return ""
-            if len(labels) == 1:
-                return labels[0]
-            if len(labels) == 2:
-                return " and ".join(labels)
-            return ", ".join(labels[:-1]) + f", and {labels[-1]}"
+        title_text = self.original_name
 
-        location_bits = []
-        if self.base_name:
-            location_bits.append(self.base_name)
-        if self.country and self.country != "Unknown":
-            location_bits.append(self.country)
-        location_text = ", ".join(location_bits) if location_bits else "this destination"
+        def _format_location() -> str:
+            parts = []
+            if self.base_name:
+                parts.append(self.base_name)
+            if self.country and self.country != "Unknown":
+                parts.append(self.country)
+            return ", ".join(parts) if parts else "this destination"
+
+        def _format_date_range() -> str:
+            if not self.generated_start_date:
+                return ""
+            start = self.generated_start_date
+            end = self.generated_end_date or self.generated_start_date
+            if start == end:
+                return start.strftime("%B %d, %Y")
+            if start.year == end.year and start.month == end.month:
+                return f"{start.strftime('%B %d')}-{end.strftime('%d, %Y')}"
+            return f"{start.strftime('%B %d, %Y')} - {end.strftime('%B %d, %Y')}"
+
+        def _highlight_distance() -> Optional[str]:
+            if not self.distance_labels:
+                return None
+            sortable: list[tuple[Decimal | int, str]] = []
+            for label in self.distance_labels:
+                distance_value = parse_distance_km(label)
+                if distance_value is not None:
+                    sortable.append((distance_value, label))
+                else:
+                    sortable.append((Decimal("0"), label))
+            sortable.sort(key=lambda item: (item[0], len(item[1]), item[1].lower()), reverse=True)
+            return sortable[0][1]
+
+        location_text = _format_location()
+        date_range_text = _format_date_range()
+        highlighted_distance = _highlight_distance()
+
+        if self.generated_start_date and self.generated_end_date and self.generated_end_date != self.generated_start_date:
+            adventure_label = f"{(self.generated_end_date - self.generated_start_date).days + 1}-day ultra adventure"
+        elif self.generated_start_date:
+            adventure_label = "single-day ultra challenge"
+        else:
+            adventure_label = "signature ultra challenge"
+
+        distance_phrase = (
+            f"a {highlighted_distance} journey"
+            if highlighted_distance
+            else "an unforgettable endurance journey"
+        )
 
         lines: list[str] = []
-        lines.append(f"{self.original_name} welcomes endurance athletes to {location_text}.")
+        lines.append(
+            f"Step into one of the most demanding yet rewarding endurance challenges -- {title_text}. "
+            f"Test your physical and mental limits across {location_text}, where every mile is a story of grit, determination, and discovery."
+        )
 
-        if self.generated_start_date:
-            start_text = self.generated_start_date.strftime("%B %d, %Y")
-            if self.generated_end_date and self.generated_end_date != self.generated_start_date:
-                end_text = self.generated_end_date.strftime("%B %d, %Y")
-                lines.append(
-                    f"The {self.year} edition runs from {start_text} to {end_text}, delivering multi-day racing energy."
-                )
-            else:
-                lines.append(
-                    f"The {self.year} edition takes place on {start_text}, perfect for a focused race weekend."
-                )
-        else:
-            lines.append(f"The {self.year} edition promises a refreshed course experience.")
-
-        sorted_distances = sorted(self.distance_labels, key=lambda value: (len(value), value.lower()))
-        if sorted_distances:
+        if date_range_text:
             lines.append(
-                f"Choose from {_format_distance_labels(sorted_distances)} challenges crafted for both seasoned ultra runners and ambitious newcomers."
+                f"This {adventure_label} ({date_range_text}) offers {distance_phrase} designed for both elite ultrarunners and determined first-timers. "
+                f"With exceptional course support, scenic terrain, and a tight-knit endurance community, {self.base_name or 'this race'} delivers more than a run -- it's an experience that transforms."
             )
         else:
-            lines.append("Look forward to a curated set of race categories tailored for diverse running goals.")
+            lines.append(
+                f"This {adventure_label} offers {distance_phrase} designed for both elite ultrarunners and determined first-timers. "
+                f"With exceptional course support, scenic terrain, and a tight-knit endurance community, {self.base_name or 'this race'} delivers more than a run -- it's an experience that transforms."
+            )
 
         if self.finishers:
             lines.append(
-                f"Historical results highlight {self.finishers} recorded finishers, underscoring supportive crews and dependable race logistics."
+                f"Join a legacy of finishers celebrated for their courage, camaraderie, and perseverance. "
+                f"Historical results showcase {self.finishers} athletes who have already conquered the course."
             )
         else:
-            lines.append("Historic records highlight a tight-knit community of trail athletes backing every stride.")
-
-        if self.registration_open_date and self.registration_close_date:
-            open_text = self.registration_open_date.strftime("%B %d, %Y")
-            close_text = self.registration_close_date.strftime("%B %d, %Y")
             lines.append(
-                f"Registration opens {open_text} and remains available until {close_text}, giving you ample time to plan travel and training."
+                "Join a legacy of finishers celebrated for their courage, camaraderie, and perseverance."
             )
 
-        lines.append(
-            "Expect attentive aid support, scenic sections worthy of a run-cation, and camaraderie that turns every kilometer into a shared adventure."
-        )
+        if self.registration_open_date:
+            open_text = self.registration_open_date.strftime("%B %d, %Y")
+            lines.append(
+                f"Registration opens {open_text}, giving you space to prepare, train, and plan your ultimate ultra-running adventure."
+            )
+        if self.registration_close_date:
+            close_text = self.registration_close_date.strftime("%B %d, %Y")
+            lines.append(f"Secure your spot before registration closes on {close_text}.")
+
+        lines.append(f"Ready to go beyond your limits? {location_text} awaits.")
 
         return "\n\n".join(lines)
 
