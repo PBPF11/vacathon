@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Participant List | Admin Panel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Participants</h1>
+    <p>Manage participants of all events.</p>
+</section>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Event</th>
+            <th>Status</th>
+            <th>BIB Number</th>
+            <th>Registration Date</th>
+            <th>Finish Time</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for participant in participants %}
+        <tr>
+            <td>{{ participant.profile.full_display_name }}</td>
+            <td>{{ participant.profile.user.email }}</td>
+            <td>{{ participant.event.title }}</td>
+            <td>{{ participant.get_status_display }}</td>
+            <td>{{ participant.bib_number|default:"-" }}</td>
+            <td>{{ participant.registration_date|date:"M d, Y" }}</td>
+            <td>
+                {% if participant.finish_time %}
+                    {{ participant.finish_time }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>
+                {% if participant.status == "registered" or participant.status == "upcoming" %}
+                <form action="{% url 'profiles:admin-participant-confirm' participant.id %}" method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn primary small">Confirm & Generate BIB</button>
+                </form>
+                {% endif %}
+                <form action="{% url 'profiles:admin-participant-delete' participant.id %}" method="POST" style="display:inline; margin-left: 5px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn danger small" onclick="return confirm('Delete this participant?');">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8">No participants found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'profiles:admin-dashboard' %}" class="btn outline">Back to Dashboard</a>
+{% endblock %}

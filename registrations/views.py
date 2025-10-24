@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 from django.views.generic import DetailView, FormView, ListView
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
 
 from events.models import Event
 from profiles.models import UserProfile

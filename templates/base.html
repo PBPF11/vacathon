@@ -20,7 +20,7 @@
                 {% url 'forum:index' as forum_url %}
                 <a href="{{ forum_url|default:'#' }}">Forum</a>
                 {% url 'profiles:dashboard' as dashboard_url %}
-                <a href="{{ dashboard_url|default:'#' }}">My Account</a>
+                <a href="{{ dashboard_url|default:'#' }}">My Account</a> 
                 {% url 'registrations:mine' as registrations_url %}
                 <a href="{{ registrations_url|default:'#' }}">My Registrations</a>
                 {% url 'notifications:inbox' as notifications_url %}
@@ -29,7 +29,11 @@
                 </a>
                 {% url 'core:about' as about_url %}
                 <a href="{{ about_url|default:'#' }}">About</a>
-            </div>
+                {% if user.is_staff %}
+                    {% url 'profiles:admin-dashboard' as admin_dashboard_url %}
+                    <a href="{{ admin_dashboard_url|default:'#' }}">Admin Dashboard</a>
+                {% endif %}
+        </div>
         </nav>
     </header>
     <main class="main-content">

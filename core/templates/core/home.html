@@ -10,7 +10,7 @@
         <div class="hero-actions">
             {% url 'events:list' as events_url %}
             <a class="btn primary" href="{{ events_url|default:'#' }}">Browse Events</a>
-            {% url 'event_submission:submit' as host_url %}
+            {% url 'profiles:admin-event-add' as host_url %}
             <a class="btn secondary" href="{{ host_url|default:'#' }}">Host an Event</a>
         </div>
     </div>
@@ -33,8 +33,7 @@
     <div class="cards">
         {% for event in featured_events %}
         <article class="event-card">
-            {% with event_title=event.title|default:event.name %}
-            <h3>{{ event_title }}</h3>
+            <h3>{{ event.title }}</h3>
             {% if event.start_date %}
             <p class="meta">
                 {{ event.city }}{% if event.country %}, {{ event.country }}{% endif %}
@@ -50,18 +49,16 @@
             </p>
             {% else %}
             <p class="meta">
-                {{ event.location }}
+                {{ event.location|default:event.city }}
                 {% if event.date %}&middot; {{ event.date }}{% endif %}
-                {% if event.category %}&middot; {{ event.category }}{% endif %}
             </p>
             {% endif %}
             {% with detail_url=event.get_absolute_url %}
             {% if detail_url %}
             <a class="btn outline" href="{{ detail_url }}">View details</a>
             {% else %}
-            <a class="btn outline" href="{{ events_url|default:'#' }}{% if events_url %}?highlight={{ event_title|urlencode }}{% endif %}">View details</a>
+            <a class="btn outline" href="{{ events_url|default:'#' }}{% if events_url %}?highlight={{ event.title|urlencode }}{% endif %}">View details</a>
             {% endif %}
-            {% endwith %}
             {% endwith %}
         </article>
         {% endfor %}

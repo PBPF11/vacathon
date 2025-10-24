@@ -1,11 +1,25 @@
 import json
 
+from forum.models import ForumThread, ForumPost, PostReport
+from .forms import EventForm, ProfileForm, AccountSettingsForm, ProfileAchievementForm
+from django.db.models import Count
+from .models import UserRaceHistory
+from events.models import Event
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import user_passes_test
+from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
+from core import models
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView, UpdateView
@@ -14,9 +28,116 @@ from .forms import (
     AccountSettingsForm,
     ProfileAchievementForm,
     ProfileForm,
+    EventForm,
 )
 from .models import RunnerAchievement, UserProfile
+from events.models import Event, EventCategory
+from profiles.models import UserProfile, UserRaceHistory
 
+
+def is_admin(user):
+    return user.is_staff or user.is_superuser
+
+def admin_required(view_func):
+    return user_passes_test(is_admin)(view_func)
+
+@login_required
+@user_passes_test(admin_required)
+def admin_event_list(request):
+    events = Event.objects.all().order_by("start_date")
+    return render(request, "profiles/admin_event_list.html", {"events": events})
+
+@login_required
+@user_passes_test(admin_required)
+def admin_event_add(request):
+    if request.method == "POST":
+        form = EventForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Event created successfully")
+            return redirect("profiles:admin-event-list")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = EventForm()
+    return render(request, "profiles/admin_event_form.html", {"form": form, "title": "Add Event"})
+
+@login_required
+@user_passes_test(admin_required)
+def admin_event_edit(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    if request.method == "POST":
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Event updated successfully")
+            return redirect("profiles:admin-event-list")
+    else:
+        form = EventForm(instance=event)
+    return render(request, "profiles/admin_event_form.html", {"form": form, "title": "Edit Event"})
+
+@login_required
+@user_passes_test(admin_required)
+def admin_event_delete(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    event.delete()
+    messages.success(request, "Event deleted successfully")
+    return redirect("profiles:admin-event-list")
+
+
+@method_decorator(user_passes_test(is_admin), name="dispatch")
+class AdminDashboardView(TemplateView):
+    template_name = "profiles/admin_dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        total_peserta = UserRaceHistory.objects.count()
+        total_event = Event.objects.count()
+        event_aktif = Event.objects.filter(status="upcoming").count()  # sesuai Event.Status
+        event_selesai = Event.objects.filter(status="completed").count()
+        
+        peserta_per_event = (
+            UserRaceHistory.objects.values("event__title")
+            .annotate(total=Count("id"))
+            .order_by("-total")
+        )
+
+        context.update({
+            "total_participants": total_peserta,
+            "total_events": total_event,
+            "events_active": event_aktif,
+            "events_completed": event_selesai,
+            "participants_per_event": peserta_per_event,
+        })
+        return context
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been created. You can now log in.')
+            return redirect('profiles:login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+def login_view(request):
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            # Redirect berbeda berdasarkan role
+            if user.is_staff:
+                return redirect("profiles:admin-dashboard")
+            return redirect("profiles:dashboard")
+    else:
+        form = AuthenticationForm()
+    return render(request, "registration/login.html", {"form": form})
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "profiles/dashboard.html"
@@ -226,3 +347,121 @@ def delete_achievement(request, achievement_id):
     achievement = get_object_or_404(RunnerAchievement, pk=achievement_id, profile=profile)
     achievement.delete()
     return JsonResponse({"success": True})
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_participant_list(request):
+    """Kelola semua peserta dari semua event"""
+    participants = UserRaceHistory.objects.select_related(
+        'profile__user', 'event'
+    ).all().order_by('-registration_date')
+    
+    context = {
+        'participants': participants,
+    }
+    return render(request, 'profiles/admin_participant_list.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_participant_confirm(request, participant_id):
+    if request.method == "POST":
+        participant = get_object_or_404(UserRaceHistory, id=participant_id)
+        participant.status = UserRaceHistory.Status.REGISTERED
+        # Generate BIB number kalau belum ada
+        if not participant.bib_number:
+            # Simple BIB generation: EVENT_ID + USER_ID + random
+            import random
+            participant.bib_number = f"{participant.event.id}{participant.profile.user.id}{random.randint(100, 999)}"
+        participant.save()
+        messages.success(request, f"Participant {participant.profile.full_display_name} confirmed!")
+    return redirect('profiles:admin-participant-list')
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_participant_delete(request, participant_id):
+    """Hapus peserta"""
+    if request.method == "POST":
+        participant = get_object_or_404(UserRaceHistory, id=participant_id)
+        participant.delete()
+        messages.success(request, "Participant deleted successfully!")
+    return redirect('profiles:admin-participant-list')
+
+
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_forum(request):
+
+    reported_posts = PostReport.objects.filter(
+        resolved=False
+    ).select_related(
+        'post__author',
+        'post__thread__event',
+        'reporter'
+    ).prefetch_related('post__reports').order_by('-created_at')
+    
+    # Get all posts with their report count
+    posts_with_reports = []
+    seen_posts = set()
+    
+    for report in reported_posts:
+        post = report.post
+        if post.id not in seen_posts:
+            seen_posts.add(post.id)
+            posts_with_reports.append({
+                'post': post,
+                'thread': post.thread,
+                'reports': post.reports.filter(resolved=False)
+            })
+    
+    context = {
+        'posts': posts_with_reports,
+        'total_reports': reported_posts.count(),
+    }
+    return render(request, 'profiles/admin_forum.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_forum_delete(request, post_id):
+    if request.method == "POST":
+        post = get_object_or_404(ForumPost, id=post_id)
+        
+        post.reports.all().update(resolved=True)
+        author_username = post.author.username
+        # Delete the post
+        post.delete()
+
+        messages.success(request, f"Post by {author_username} has been deleted!")
+    return redirect('profiles:admin-forum')
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_forum_pinned(request, post_id):
+    if request.method == "POST":
+        post = get_object_or_404(ForumPost, id=post_id)
+        thread = post.thread
+        
+        # Toggle pin status
+        thread.is_pinned = not thread.is_pinned
+        thread.save()
+        
+        status = "pinned" if thread.is_pinned else "unpinned"
+        messages.success(request, f"Thread '{thread.title}' has been {status}!")
+    return redirect('profiles:admin-forum')
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_forum_resolve(request, report_id):
+    if request.method == "POST":
+        report = get_object_or_404(PostReport, id=report_id)
+        report.resolved = True
+        report.save()
+        messages.success(request, "Report has been resolved!")
+    return redirect('profiles:admin-forum')

@@ -55,9 +55,9 @@ class UserProfile(models.Model):
 
 
 class UserRaceHistory(models.Model):
-    """Captures user's participation and outcomes for marathon events."""
 
     class Status(models.TextChoices):
+        PENDING = "pending", "Pending Review"
         REGISTERED = "registered", "Registered"
         COMPLETED = "completed", "Completed"
         DNF = "dnf", "Did Not Finish"
@@ -76,7 +76,7 @@ class UserRaceHistory(models.Model):
     )
     category = models.CharField(max_length=50, blank=True)
     registration_date = models.DateField(default=timezone.now)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.REGISTERED)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     bib_number = models.CharField(max_length=20, blank=True)
     finish_time = models.DurationField(null=True, blank=True)
     medal_awarded = models.BooleanField(default=False)
@@ -110,3 +110,5 @@ class RunnerAchievement(models.Model):
 
     def __str__(self) -> str:
         return f"{self.profile.full_display_name} - {self.title}"
+
+

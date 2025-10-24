@@ -35,6 +35,12 @@
         <p class="bio">{{ profile.bio|default:"Tell the community about your running story." }}</p>
         <a class="btn secondary" href="{% url 'profiles:edit' %}">Edit profile</a>
         <a class="btn outline" href="{% url 'profiles:settings' %}">Account settings</a>
+
+        <!-- Tambahan: Tombol Logout -->
+        <form method="post" action="{% url 'logout' %}" style="margin-top: 10px;">
+            {% csrf_token %}
+            <button type="submit" class="btn danger">Logout</button>
+        </form>
     </aside>
 
     <section class="dashboard-main">

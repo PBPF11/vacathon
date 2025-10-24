@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Admin Panel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ title }}</h1>
+    <p>Fill the form below to {{ title|lower }}.</p>
+</section>
+
+<!-- Tambahin messages display -->
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert {{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="form-container">
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p class="error" style="color: red; margin-top: 5px;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn primary">Save</button>
+        <a href="{% url 'profiles:admin-event-list' %}" class="btn outline">Cancel</a>
+    </form>
+</div>
+{% endblock %}
