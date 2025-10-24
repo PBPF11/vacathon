@@ -70,19 +70,23 @@
         </aside>
     </section>
 
+    <!-- ===== BAGIAN YANG DIPERBARUI ===== -->
     <section class="registration-status">
         <header>
             <h2>Registration Status</h2>
             <p data-availability-label>
-                {% if is_registration_open %}
+                {% if event.is_registration_open %}
                     Registration is open. Secure your bib today!
                 {% else %}
                     Registration is currently closed.
                 {% endif %}
             </p>
         </header>
+        
+        {% if event.participant_limit %}
         <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ capacity_ratio }}">
-            <div class="progress-fill" style="width: {{ capacity_ratio }}%"></div>
+            <!-- PERBAIKAN DI BARIS INI -->
+            <div class="progress-fill" style="width: {{ capacity_ratio }}%;"></div> 
         </div>
         <div class="capacity-meta">
             {% if remaining_slots is not None %}
@@ -91,15 +95,28 @@
             <span data-capacity-ratio>{{ capacity_ratio }}% capacity</span>
             <span>Deadline: {{ event.registration_deadline|date:"M j, Y" }}</span>
         </div>
-        {% if registration_cta_url %}
-        <a class="btn primary" href="{{ registration_cta_url }}">Proceed to Registration</a>
-        {% else %}
-        <button class="btn primary" type="button" disabled>Registration Module Coming Soon</button>
         {% endif %}
+
+        {% if event.is_registration_open %}
+            <div class="category-registration-buttons" style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem;">
+                {% for category in event.categories.all %}
+                    <a class="btn primary" 
+                       href="{% url 'registrations:start' event_slug=event.slug category_slug=category.slug %}">
+                        Register for {{ category.display_name }}
+                    </a>
+                {% empty %}
+                    <p>No specific race categories available for registration yet.</p>
+                {% endfor %}
+            </div>
+        {% else %}
+            <button class="btn primary" type="button" disabled style="margin-top: 1.5rem;">Registration Closed</button>
+        {% endif %}
+
         {% if forum_threads_url %}
-        <a class="btn outline" href="{{ forum_threads_url }}">Discuss this event on the forum</a>
+        <a class="btn outline" href="{{ forum_threads_url }}" style="margin-top: 1rem;">Discuss this event on the forum</a>
         {% endif %}
     </section>
+    <!-- ===== AKHIR BAGIAN YANG DIPERBARUI ===== -->
 
     <section class="route-highlights">
         <header>
@@ -186,3 +203,4 @@
 {% block extra_scripts %}
 <script src="{% static 'js/event_detail.js' %}"></script>
 {% endblock %}
+

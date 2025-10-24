@@ -1,79 +1,52 @@
 from django import forms
-
-from events.models import Event, EventCategory
-from .models import EventRegistration
-
+from .models import Registration
 
 class RegistrationForm(forms.ModelForm):
-    accept_terms = forms.BooleanField(
-        required=True,
-        label="I agree to the event terms and conditions.",
-    )
-    distance_label = forms.CharField(
-        required=False,
-        label="Preferred distance",
-        help_text="If this event offers open categories, specify your target distance.",
+    """
+    Form untuk user mengisi data pendaftaran event.
+    """
+    agreed_to_waiver = forms.BooleanField(
+        required=True, 
+        label="Saya telah membaca dan menyetujui Syarat & Ketentuan serta Pernyataan Medis yang berlaku."
     )
 
     class Meta:
-        model = EventRegistration
+        model = Registration
         fields = [
-            "category",
-            "phone_number",
-            "emergency_contact_name",
-            "emergency_contact_phone",
-            "medical_notes",
+            'full_name', 
+            'date_of_birth', 
+            'gender', 
+            'phone_number', 
+            'email', 
+            'address', 
+            'emergency_contact_name', 
+            'emergency_contact_phone', 
+            'shirt_size', 
+            'payment_proof', 
+            'agreed_to_waiver', 
         ]
+        
         widgets = {
-            "medical_notes": forms.Textarea(attrs={"rows": 3}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}), 
+            'gender': forms.RadioSelect, 
+            'address': forms.Textarea(attrs={'rows': 3}), 
+        }
+        
+        labels = {
+            'full_name': "Nama Lengkap",
+            'date_of_birth': "Tanggal Lahir",
+            'gender': "Jenis Kelamin",
+            'phone_number': "Nomor HP",
+            'email': "Alamat Email",
+            'address': "Alamat Lengkap",
+            'emergency_contact_name': "Nama Kontak Darurat",
+            'emergency_contact_phone': "Nomor HP Kontak Darurat",
+            'shirt_size': "Ukuran Baju (jika ada)",
+            'payment_proof': "Unggah Bukti Pembayaran (jika perlu)",
+        }
+        
+        help_texts = {
+            'phone_number': "Contoh: 081234567890",
+            'payment_proof': "Upload file gambar (JPG, PNG). Kosongkan jika event gratis.",
         }
 
-    def __init__(self, *args, **kwargs):
-        self.event: Event = kwargs.pop("event")
-        self.user = kwargs.pop("user")
-        super().__init__(*args, **kwargs)
-        categories = self.event.categories.order_by("distance_km")
-        if categories.exists():
-            self.fields["category"].queryset = categories
-            self.fields["category"].required = True
-            self.fields["category"].label = "Select distance"
-            self.fields["distance_label"].widget = forms.HiddenInput()
-            self.fields["distance_label"].required = False
-        else:
-            self.fields["category"].widget = forms.HiddenInput()
-            self.fields["category"].required = False
-            self.fields["distance_label"].required = True
-        for field in self.fields.values():
-            existing = field.widget.attrs.get("class", "")
-            field.widget.attrs["class"] = f"{existing} control".strip()
-
-    def clean(self):
-        cleaned = super().clean()
-        if EventRegistration.objects.filter(user=self.user, event=self.event).exclude(
-            pk=self.instance.pk
-        ).exists():
-            raise forms.ValidationError("You have already registered for this event.")
-
-        participant_limit = self.event.participant_limit or 0
-        if participant_limit:
-            active_qs = EventRegistration.objects.filter(
-                event=self.event,
-                status__in=[
-                    EventRegistration.Status.PENDING,
-                    EventRegistration.Status.CONFIRMED,
-                    EventRegistration.Status.WAITLISTED,
-                ],
-            )
-            if self.instance.pk:
-                active_qs = active_qs.exclude(pk=self.instance.pk)
-            active_registrations = active_qs.count()
-            if active_registrations >= participant_limit:
-                cleaned["waitlisted"] = True
-        if not cleaned.get("category") and self.fields["category"].required:
-            self.add_error("category", "Please select an available distance.")
-        if (
-            self.fields["category"].required is False
-            and not cleaned.get("distance_label")
-        ):
-            raise forms.ValidationError("Please specify your intended distance.")
-        return cleaned

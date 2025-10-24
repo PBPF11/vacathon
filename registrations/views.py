@@ -1,150 +1,155 @@
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET
-from django.views.generic import DetailView, FormView, ListView
+from django.views.generic import DetailView, ListView, View
+from django.http import JsonResponse, HttpResponseForbidden
+from django.contrib import messages
 
-from events.models import Event
-from profiles.models import UserProfile
+# --- Impor Event DAN EventCategory dari app 'events' ---
+from events.models import Event, EventCategory 
+# --------------------------------------------------------
+
+# Impor model Registration
+from .models import Registration 
+# Impor form RegistrationForm
 from .forms import RegistrationForm
-from .models import EventRegistration
 
+@method_decorator(login_required, name="dispatch")
+class RegistrationStartView(View):
+    """Menangani GET (tampil form) & POST (proses form) pendaftaran baru."""
+    template_name = "registrations/registration_form.html"
 
-class RegistrationStartView(LoginRequiredMixin, FormView):
-    template_name = "registrations/register.html"
-    form_class = RegistrationForm
+    # Helper method untuk mengambil event dan category dari slug di URL
+    def get_event_and_category(self, event_slug, category_slug):
+        event = get_object_or_404(Event, slug=event_slug)
+        # Pastikan kategori yang dipilih memang ada di event tersebut
+        # Kita pakai event.categories.get() karena ini ManyToMany
+        category = get_object_or_404(event.categories, slug=category_slug) 
+        return event, category
 
-    def dispatch(self, request, *args, **kwargs):
-        self.event = get_object_or_404(
-            Event.objects.prefetch_related("categories"),
-            slug=kwargs["slug"],
-        )
-        self.existing_registration = None
-        if request.user.is_authenticated:
-            self.existing_registration = EventRegistration.objects.filter(
-                user=request.user, event=self.event
-            ).select_related("category").first()
-        return super().dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        event_slug = kwargs.get("event_slug")
+        category_slug = kwargs.get("category_slug")
+        
+        try:
+            event, category = self.get_event_and_category(event_slug, category_slug)
+        # Tangkap error jika event/category tidak ditemukan ATAU jika category tidak ada di event itu
+        except (Event.DoesNotExist, EventCategory.DoesNotExist, Exception) as e: 
+             messages.error(request, "Invalid event or category specified.")
+             return redirect('core:home') # Arahkan ke home jika link salah
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["event"] = self.event
-        kwargs["user"] = self.request.user
-        if self.existing_registration:
-            kwargs["instance"] = self.existing_registration
-        return kwargs
+        # Cek jika user sudah terdaftar di event ini (di kategori manapun)
+        # Kita cek berdasarkan event saja
+        existing_registration = Registration.objects.filter(user=request.user, category__event=event).first()
+        if existing_registration:
+             messages.info(request, f"You are already registered for an event category in {event.title}.")
+             # Arahkan ke detail pendaftaran yang sudah ada
+             return redirect('registrations:detail', reference=existing_registration.reference_code)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["event"] = self.event
-        context["existing_registration"] = self.existing_registration
-        context["event_capacity"] = {
-            "limit": self.event.participant_limit,
-            "registered": self.event.registered_count,
-            "remaining": (
-                max(self.event.participant_limit - self.event.registered_count, 0)
-                if self.event.participant_limit
-                else None
-            ),
+        # Cek jika pendaftaran masih buka
+        if not event.is_registration_open:
+             messages.warning(request, f"Sorry, registration for {event.title} is closed.")
+             # Arahkan ke detail event atau daftar event
+             return redirect(event.get_absolute_url() if event else 'events:list') 
+
+        # Buat form, coba isi data awal dari profil user
+        initial_data = {
+            'full_name': request.user.get_full_name() or request.user.username,
+            'email': request.user.email,
+            # Tambahkan field lain jika ada di model User atau Profile
         }
-        return context
+        form = RegistrationForm(initial=initial_data)
+        
+        context = {
+            'form': form,
+            'category': category,
+            'event': event, # Kirim event ke template
+        }
+        return render(request, self.template_name, context)
 
-    def form_valid(self, form):
-        waitlisted = form.cleaned_data.pop("waitlisted", False)
-        category = form.cleaned_data.get("category")
-        distance_label = form.cleaned_data.get("distance_label") or ""
-        status = (
-            EventRegistration.Status.WAITLISTED
-            if waitlisted
-            else EventRegistration.Status.PENDING
-        )
-        registration, created = EventRegistration.objects.update_or_create(
-            user=self.request.user,
-            event=self.event,
-            defaults={
-                "category": category,
-                "distance_label": category.display_name if category else distance_label,
-                "phone_number": form.cleaned_data["phone_number"],
-                "emergency_contact_name": form.cleaned_data["emergency_contact_name"],
-                "emergency_contact_phone": form.cleaned_data["emergency_contact_phone"],
-                "medical_notes": form.cleaned_data.get("medical_notes", ""),
-                "status": status,
-                "form_payload": {
-                    "submitted_via": "web",
-                },
-            },
-        )
-        if created:
-            message = "Registration submitted successfully."
+    def post(self, request, *args, **kwargs):
+        event_slug = kwargs.get("event_slug")
+        category_slug = kwargs.get("category_slug")
+
+        try:
+            event, category = self.get_event_and_category(event_slug, category_slug)
+        except (Event.DoesNotExist, EventCategory.DoesNotExist, Exception) as e:
+             messages.error(request, "Invalid event or category specified.")
+             return redirect('core:home')
+        
+        # Cek lagi jika pendaftaran masih buka saat POST
+        if not event.is_registration_open:
+             messages.warning(request, f"Sorry, registration for {event.title} closed.")
+             return redirect(event.get_absolute_url() if event else 'events:list')
+
+        # Proses data form yang dikirim user
+        form = RegistrationForm(request.POST, request.FILES) # Tambahkan request.FILES untuk upload gambar
+
+        if form.is_valid():
+            registration = form.save(commit=False) # Jangan simpan dulu
+            registration.user = request.user # Set user yang login
+            registration.category = category # Set kategori yang dipilih
+            # Status awal (MENUNGGU) sudah di-set di default model
+            registration.save() # Simpan ke database
+            
+            messages.success(request, f"Successfully registered for {event.title} ({category.display_name})! Your registration is pending confirmation.")
+            # Redirect ke halaman 'My Registrations' setelah berhasil
+            return redirect('registrations:mine') 
         else:
-            message = "Registration updated successfully."
-        if waitlisted:
-            message += " You have been placed on the waitlist due to limited slots."
-        messages.success(self.request, message)
-        return redirect("registrations:detail", reference=registration.reference_code)
+            # Jika form tidak valid, tampilkan kembali halaman form dengan error
+            messages.error(request, "Please correct the errors below.")
+            context = {
+                'form': form, # Kirim form yang berisi error
+                'category': category,
+                'event': event,
+            }
+            return render(request, self.template_name, context) # Render ulang template
 
 
-class RegistrationDetailView(LoginRequiredMixin, DetailView):
-    model = EventRegistration
-    slug_url_kwarg = "reference"
-    slug_field = "reference_code"
-    template_name = "registrations/detail.html"
-    context_object_name = "registration"
-
-    def get_queryset(self):
-        return EventRegistration.objects.select_related("event", "category", "user")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["event_url"] = self.object.event.get_absolute_url()
-        context["dashboard_url"] = reverse("profiles:dashboard")
-        return context
-
-
-class MyRegistrationsView(LoginRequiredMixin, ListView):
+# --- Views lain (MyRegistrationsView, RegistrationDetailView) tetap sama ---
+@method_decorator(login_required, name="dispatch")
+class MyRegistrationsView(ListView):
+    model = Registration
     template_name = "registrations/my_registrations.html"
     context_object_name = "registrations"
 
     def get_queryset(self):
-        return EventRegistration.objects.filter(user=self.request.user).select_related(
-            "event", "category"
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
-        context["profile"] = profile
-        return context
+        # Ambil event dari category untuk order_by
+        # Perhatikan: Karena ManyToMany, kita perlu path '__event'
+        return Registration.objects.filter(user=self.request.user)\
+                                   .select_related('category', 'category__event')\
+                                   .order_by('-category__event__start_date', '-created_at') # Order by event date first
 
 
+@method_decorator(login_required, name="dispatch")
+class RegistrationDetailView(DetailView):
+    model = Registration
+    template_name = "registrations/registration_detail.html"
+    context_object_name = "registration"
+    slug_field = "reference_code" 
+    slug_url_kwarg = "reference"
+
+    def get_queryset(self):
+        return Registration.objects.filter(user=self.request.user)
+
+
+# --- API View (Opsional, jika diperlukan oleh Javascript) ---
 @login_required
-@require_GET
 def my_registrations_json(request):
-    registrations = EventRegistration.objects.filter(user=request.user).select_related(
-        "event", "category"
-    )
-    results = []
-    for registration in registrations:
-        results.append(
-            {
-                "reference": registration.reference_code,
-                "event": registration.event.title,
-                "event_slug": registration.event.slug,
-                "status": registration.status,
-                "status_display": registration.get_status_display(),
-                "category": (
-                    registration.category.display_name
-                    if registration.category
-                    else registration.distance_label
-                ),
-                "created_at": registration.created_at.isoformat(),
-                "url": reverse(
-                    "registrations:detail", kwargs={"reference": registration.reference_code}
-                ),
-            }
-        )
-    return JsonResponse({"results": results})
+    """Returns user's registrations as JSON."""
+    registrations = Registration.objects.filter(user=request.user)\
+                                      .select_related('category', 'category__event')\
+                                      .order_by('-category__event__start_date', '-created_at')\
+                                      .values(
+                                          'reference_code', 
+                                          'status', 
+                                          'category__display_name', 
+                                          'category__event__title',
+                                          'category__event__start_date',
+                                          'category__event__city',
+                                          'category__event__country'
+                                      )
+    data = list(registrations) # Convert QuerySet to list for JSON serialization
+    return JsonResponse(data, safe=False)
+
