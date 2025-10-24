@@ -10,11 +10,15 @@
         <div class="hero-actions">
             {% url 'events:list' as events_url %}
             <a class="btn primary" href="{{ events_url|default:'#' }}">Browse Events</a>
-            {% url 'profiles:admin-event-add' as host_url %}
-            <a class="btn secondary" href="{{ host_url|default:'#' }}">Host an Event</a>
+            {% if user.is_authenticated and user.is_staff %}
+        {% url 'profiles:admin-event-add' as add_event_url %}
+        <a href="{{ add_event_url|default:'#' }}" class="btn secondary" id="host-event-button">Host an Event</a>
+    {% endif %}
         </div>
     </div>
 </section>
+
+
 
 <section class="stats">
     {% for label, value in stats.items %}

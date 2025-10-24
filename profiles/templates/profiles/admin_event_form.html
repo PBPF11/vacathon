@@ -9,7 +9,6 @@
     <p>Fill the form below to {{ title|lower }}.</p>
 </section>
 
-<!-- Tambahin messages display -->
 {% if messages %}
 <div class="messages">
     {% for message in messages %}
@@ -21,7 +20,7 @@
 {% endif %}
 
 <div class="form-container">
-    <form method="POST">
+    <form method="POST" id="event-form">
         {% csrf_token %}
         {{ form.non_field_errors }}
         {% for field in form %}
@@ -31,8 +30,9 @@
                 {% if field.help_text %}
                     <small class="help-text">{{ field.help_text }}</small>
                 {% endif %}
+                <p class="error-message" id="{{ field.id_for_label }}-error" style="color: red; margin-top: 5px;"></p>
                 {% for error in field.errors %}
-                    <p class="error" style="color: red; margin-top: 5px;">{{ error }}</p>
+                    <p class="error-default" style="color: red; margin-top: 5px;">{{ error }}</p>
                 {% endfor %}
             </div>
         {% endfor %}
@@ -40,4 +40,65 @@
         <a href="{% url 'profiles:admin-event-list' %}" class="btn outline">Cancel</a>
     </form>
 </div>
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    function clearErrors() {
+        $('.error-message').text(''); 
+        $('.error-default').hide();  
+        $('.form-group').removeClass('has-error'); 
+    }
+
+    $('#event-form').on('submit', function(e) { 
+        e.preventDefault(); 
+        clearErrors(); 
+
+        var form = $(this);
+        var url = "{% url 'profiles:admin-event-add' %}";
+        var data = form.serialize();
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: data,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' 
+            },
+            success: function(response) {
+                swal({
+                    title: "Success!",
+                    text: response.message,
+                    icon: "success",
+                    button: "OK",
+                }).then(() => {
+                    window.location.href = "{% url 'profiles:admin-event-list' %}";
+                });
+            },
+            error: function(xhr) {
+                var response = xhr.responseJSON;
+                
+                swal("Validation Error!", "Please correct the errors in the form.", "error");
+
+                if (response.errors) {
+                    for (var fieldName in response.errors) {
+                        var fieldElement = $('#id_' + fieldName);
+                        fieldElement.closest('.form-group').addClass('has-error');
+                        
+                        var errorContainer = $('#' + fieldElement.attr('id') + '-error');
+                        errorContainer.text(response.errors[fieldName].join(' '));
+                    }
+                } else {
+                    swal("Error!", response.message || "An unexpected error occurred.", "error");
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

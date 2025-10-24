@@ -1,0 +1,31 @@
+{% load static custom_tags %}
+<div class="modal-header">
+    <h2 class="modal-title">{{ title }}</h2>
+    <button type="button" class="close-modal-btn" onclick="closeModal()">&times;</button>
+</div>
+
+<div class="modal-body">
+    <form method="POST" id="event-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field|add_class:"form-control" }}
+                
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text }}</small>
+                {% endif %}
+                
+                {% for error in field.errors %}
+                    <p class="error-default" style="color: red; margin-top: 5px;">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <div class="form-actions">
+            <button type="submit" class="btn primary">Save</button>
+            <button type="button" class="btn outline" onclick="closeModal()">Cancel</button>
+        </div>
+    </form>
+</div>
