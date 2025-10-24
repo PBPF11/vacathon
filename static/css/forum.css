@@ -1,13 +1,8 @@
 .forum-controls {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     align-items: flex-end;
-    box-shadow: 0 14px 28px rgba(15, 48, 87, 0.12);
 }
 
 .forum-controls form {
@@ -84,10 +79,6 @@
 }
 
 .thread-view {
-    background: var(--white);
-    border-radius: 18px;
-    box-shadow: 0 20px 40px rgba(15, 48, 87, 0.12);
-    padding: 2.5rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -146,10 +137,6 @@
 }
 
 .thread-form {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 16px 32px rgba(15, 48, 87, 0.1);
     display: grid;
     gap: 1.5rem;
 }

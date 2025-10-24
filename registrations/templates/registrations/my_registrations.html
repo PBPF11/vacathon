@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>My Event Registrations</h1>
     <p>Monitor registration statuses and stay informed before race day.</p>
 </section>
 
-<section class="registration-listing"
+<section class="registration-listing layout-section layout-section--flush"
          data-endpoint="{% url 'registrations:mine-json' %}">
     {% if registrations %}
     <ul class="registration-list">

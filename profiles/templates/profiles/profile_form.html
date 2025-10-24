@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Edit Profile</h1>
     <p>Keep your runner profile up to date so fellow athletes can connect.</p>
 </section>
 
-<form method="post" class="profile-form">
+<form method="post" class="profile-form layout-section layout-surface">
     {% csrf_token %}
     {{ form.non_field_errors }}
     {% for field in form %}

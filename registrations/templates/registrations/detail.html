@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Registration Summary</h1>
     <p>Keep this reference handy for future updates or check-in.</p>
 </section>
 
-<article class="registration-summary">
+<article class="registration-summary layout-section layout-surface">
     <header>
         <h2>{{ registration.event.title }}</h2>
         <p>{{ registration.event.start_date|date:"M j, Y" }} &middot; {{ registration.event.city }}, {{ registration.event.country }}</p>

@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Community Forum</h1>
     <p>Swap insights, race strategies, and travel hacks with fellow Vacathon runners.</p>
 </section>
 
-<section class="forum-controls">
+<section class="forum-controls layout-section layout-surface">
     <form id="thread-filter-form" method="get" novalidate>
         <div class="field">
             <label for="id_event">Event</label>
@@ -50,12 +50,12 @@
 </section>
 
 {% url 'forum:threads-json' as threads_endpoint %}
-<section class="thread-list" data-endpoint="{{ threads_endpoint }}">
+<section class="thread-list layout-section layout-section--flush" data-endpoint="{{ threads_endpoint }}">
     {% include "forum/partials/thread_list.html" with threads=threads %}
 </section>
 
 {% if is_paginated %}
-<nav class="pagination">
+<nav class="pagination layout-section layout-section--compact">
     {% if page_obj.has_previous %}
     <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
     {% endif %}

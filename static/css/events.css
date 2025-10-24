@@ -1,12 +1,7 @@
 .filter-panel {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
-    box-shadow: 0 12px 24px rgba(15, 48, 87, 0.12);
 }
 
 .filter-panel form {
