@@ -2,12 +2,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, FormView, ListView
-from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 
 from events.models import Event
@@ -150,3 +149,55 @@ def my_registrations_json(request):
             }
         )
     return JsonResponse({"results": results})
+
+
+@login_required
+@require_POST
+def register_ajax(request, slug):
+    """AJAX endpoint for modal registration form submission."""
+    event = get_object_or_404(Event.objects.prefetch_related("categories"), slug=slug)
+
+    # Check if user is already registered
+    existing_registration = EventRegistration.objects.filter(
+        user=request.user, event=event
+    ).select_related("category").first()
+
+    form = RegistrationForm(request.POST, event=event, user=request.user, instance=existing_registration)
+
+    if form.is_valid():
+        waitlisted = form.cleaned_data.pop("waitlisted", False)
+        category = form.cleaned_data.get("category")
+        distance_label = form.cleaned_data.get("distance_label") or ""
+        status = (
+            EventRegistration.Status.WAITLISTED
+            if waitlisted
+            else EventRegistration.Status.PENDING
+        )
+        registration, created = EventRegistration.objects.update_or_create(
+            user=request.user,
+            event=event,
+            defaults={
+                "category": category,
+                "distance_label": category.display_name if category else distance_label,
+                "phone_number": form.cleaned_data["phone_number"],
+                "emergency_contact_name": form.cleaned_data["emergency_contact_name"],
+                "emergency_contact_phone": form.cleaned_data["emergency_contact_phone"],
+                "medical_notes": form.cleaned_data.get("medical_notes", ""),
+                "status": status,
+                "form_payload": {
+                    "submitted_via": "modal",
+                },
+            },
+        )
+
+        return JsonResponse({
+            "success": True,
+            "message": "Registration submitted successfully." if created else "Registration updated successfully.",
+            "registration_url": reverse("registrations:detail", kwargs={"reference": registration.reference_code}),
+        })
+
+    return JsonResponse({
+        "success": False,
+        "errors": form.errors,
+        "non_field_errors": form.non_field_errors(),
+    })

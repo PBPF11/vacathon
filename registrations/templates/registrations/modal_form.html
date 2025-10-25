@@ -1,0 +1,25 @@
+<div class="modal" id="registration-modal" data-modal>
+    <div class="modal-content">
+        <h2>Register for {{ event.title }}</h2>
+        <p>Secure your slot and get ready for an unforgettable run.</p>
+
+        <form method="post" id="modal-registration-form" data-registration-form>
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+            <div class="field">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}
+                <p class="help-text">{{ field.help_text }}</p>
+                {% endif %}
+                {{ field.errors }}
+            </div>
+            {% endfor %}
+            <div class="actions">
+                <button class="btn secondary" type="button" data-close-modal>Cancel</button>
+                <button class="btn primary" type="submit">Submit registration</button>
+            </div>
+        </form>
+    </div>
+</div>

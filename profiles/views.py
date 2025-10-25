@@ -379,11 +379,23 @@ def admin_participant_list(request):
 def admin_participant_confirm(request, participant_id):
     if request.method == "POST":
         participant = get_object_or_404(UserRaceHistory, id=participant_id)
-        participant.status = UserRaceHistory.Status.REGISTERED
+        participant.status = UserRaceHistory.Status.UPCOMING  # Changed to UPCOMING to match CONFIRMED sync
+        # Generate BIB number kalau belum ada
         if not participant.bib_number:
             import random
             participant.bib_number = f"{participant.event.id}{participant.profile.user.id}{random.randint(100, 999)}"
         participant.save()
+
+        # Also update the EventRegistration status to CONFIRMED
+        from registrations.models import EventRegistration
+        registration = EventRegistration.objects.filter(
+            user=participant.profile.user,
+            event=participant.event
+        ).first()
+        if registration:
+            registration.status = EventRegistration.Status.CONFIRMED
+            registration.save()
+
         messages.success(request, f"Participant {participant.profile.full_display_name} confirmed!")
     return redirect('profiles:admin-participant-list')
 
@@ -393,6 +405,26 @@ def admin_participant_confirm(request, participant_id):
 def admin_participant_delete(request, participant_id):
     if request.method == "POST":
         participant = get_object_or_404(UserRaceHistory, id=participant_id)
+        # Also delete the EventRegistration
+        from registrations.models import EventRegistration
+        registration = EventRegistration.objects.filter(
+            user=participant.profile.user,
+            event=participant.event
+        ).first()
+        if registration:
+            # Send cancellation notification before deleting
+            from notifications.utils import send_notification
+            from notifications.models import Notification
+            detail_kwargs = {"reference": registration.reference_code}
+            send_notification(
+                recipient=registration.user,
+                title=f"Registration cancelled - {registration.event.title}",
+                message="Your registration has been cancelled by an administrator. Contact support for more details.",
+                category=Notification.Category.REGISTRATION,
+                url_name="registrations:detail",
+                url_kwargs=detail_kwargs,
+            )
+            registration.delete()
         participant.delete()
         messages.success(request, "Participant deleted successfully!")
     return redirect('profiles:admin-participant-list')
