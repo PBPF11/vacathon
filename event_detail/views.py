@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -8,7 +9,7 @@ from django.urls import NoReverseMatch, reverse
 from events.models import Event
 
 
-class EventDetailView(DetailView):
+class EventDetailView(LoginRequiredMixin, DetailView):
     model = Event
     template_name = "event_detail/event_detail.html"
     context_object_name = "event"

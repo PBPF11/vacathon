@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db import models
 from django.http import JsonResponse
@@ -9,7 +10,7 @@ from .forms import EventFilterForm
 from .models import Event
 
 
-class EventListView(ListView):
+class EventListView(LoginRequiredMixin, ListView):
     template_name = "events/event_list.html"
     context_object_name = "events"
     paginate_by = 9

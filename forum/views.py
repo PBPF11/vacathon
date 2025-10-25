@@ -15,7 +15,7 @@ from .forms import PostForm, ThreadForm
 from .models import ForumPost, ForumThread, PostReport
 
 
-class ForumIndexView(ListView):
+class ForumIndexView(LoginRequiredMixin, ListView):
     template_name = "forum/index.html"
     context_object_name = "threads"
     paginate_by = 10
@@ -71,7 +71,7 @@ class ThreadCreateView(LoginRequiredMixin, CreateView):
         return reverse("forum:thread-detail", kwargs={"slug": self.object.slug})
 
 
-class ThreadDetailView(DetailView):
+class ThreadDetailView(LoginRequiredMixin, DetailView):
     model = ForumThread
     context_object_name = "thread"
     slug_field = "slug"
