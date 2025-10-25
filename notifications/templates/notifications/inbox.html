@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Notifications</h1>
     <p>Stay updated with registration decisions and event announcements.</p>
 </section>
 
-<section class="notifications-inbox"
+<section class="notifications-inbox layout-section layout-surface"
          data-endpoint="{% url 'notifications:inbox-json' %}">
     <header>
         <span>{{ unread_count }} unread</span>
@@ -48,7 +48,7 @@
     </div>
     {% endif %}
     {% if is_paginated %}
-    <nav class="pagination">
+    <nav class="pagination layout-section layout-section--compact">
         {% if page_obj.has_previous %}
         <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
         {% endif %}

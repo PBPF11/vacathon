@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Stylised runners background</title>
+  <desc id="desc">Abstract silhouettes of multiple runners in bright colors finishing a race.</desc>
+  <defs>
+    <linearGradient id="finish" x1="0" x2="1" y1="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="#f8fafc"/>
+  <rect width="1200" height="800" fill="url(#finish)"/>
+  <g opacity="0.85">
+    <path fill="#9d4edd" d="M952 768c-32 0-58-26-58-58l16-188-40-120 26-160 110-36 18 110-34 118 34 64c22 42 38 86 38 132 0 73-54 138-110 138z"/>
+    <path fill="#f97316" d="M580 770c-48 0-88-40-88-88 0-16 4-32 12-46l40-78-28-154 118-82 120 32-32 174 24 118c2 8 4 16 4 24 0 52-42 98-88 98z"/>
+    <path fill="#22c55e" d="M742 688c-48-8-76-58-68-106l22-124-34-146 92-86 90 54-28 160 26 154c10 54-30 104-82 106-6 0-12 0-18-2z"/>
+    <path fill="#0ea5e9" d="M440 720c-57 0-102-47-102-106 0-16 4-32 12-48l50-112-14-132 92-92 110 60-16 156 32 136c2 8 2 16 2 24 0 63-47 114-102 114-21 0-42-8-62-20z"/>
+    <path fill="#ef4444" d="M270 712c-56 0-102-54-102-118 0-24 6-48 18-70l48-90-32-128 90-80 96 46-24 148 22 110c10 54-26 118-78 150-12 8-24 12-38 12z"/>
+    <path fill="#facc15" d="M156 640c-58-12-94-78-78-138l20-68-40-118 90-70 86 42-28 126 24 114c12 56-20 116-74 118-6 0-12 0-20-6z"/>
+  </g>
+  <g opacity="0.35">
+    <ellipse cx="600" cy="780" rx="520" ry="60" fill="#0f172a"/>
+  </g>
+</svg>

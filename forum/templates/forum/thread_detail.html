@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<nav class="breadcrumb">
+<nav class="breadcrumb layout-section layout-section--compact">
     {% for crumb in breadcrumbs %}
     <a href="{{ crumb.url|default:'#' }}" {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.label }}</a>
     {% if not forloop.last %}
@@ -18,7 +18,7 @@
     {% endfor %}
 </nav>
 
-<article class="thread-view">
+<article class="thread-view layout-section layout-surface">
     <header class="thread-header">
         <span class="badge">{{ thread.event.title }}</span>
         <h1>{{ thread.title }}</h1>

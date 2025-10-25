@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Start a new discussion</h1>
     <p>Share tips, build hype, and help runners prepare for the big day.</p>
 </section>
 
-<form method="post" class="thread-form">
+<form method="post" class="thread-form layout-section layout-surface">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div class="field">

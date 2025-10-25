@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Welcome back, {{ profile.full_display_name }}!</h1>
     <p>Track your marathon journey, upcoming events, and achievements in one place.</p>
 </section>
 
-<div class="profile-dashboard"
+<div class="profile-dashboard layout-section layout-section--flush"
      data-profile-endpoint="{% url 'profiles:profile-json' %}"
      data-achievement-endpoint="{% url 'profiles:achievements' %}">
     <aside class="profile-card">

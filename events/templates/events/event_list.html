@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Discover Marathon Events</h1>
     <p>Use filters to find races that match your distance, schedule, and destination goals.</p>
 </section>
 
-<div class="filter-panel">
+<div class="filter-panel layout-section layout-surface">
     <form id="event-filter-form" method="get" novalidate>
         <div class="field">
             {{ filter_form.q.label_tag }}
@@ -41,11 +41,13 @@
 
 {% url 'events:json' as events_json_url %}
 {% url 'event_detail:detail' slug='slug-placeholder' as detail_placeholder %}
-<div id="events-container"
+<div class="layout-section layout-section--flush">
+    <div id="events-container"
      data-endpoint="{{ events_json_url|default:'#' }}"
      data-detail-url-template="{{ detail_placeholder|default:'#' }}"
      data-detail-slug-placeholder="slug-placeholder">
     {% include "events/partials/event_grid.html" with events=events page_obj=page_obj paginator=paginator %}
+</div>
 </div>
 {% endblock %}
 

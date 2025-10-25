@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Account Settings</h1>
     <p>Manage your personal information, login credentials, and achievements.</p>
 </section>
 
-<div class="settings-grid" data-achievement-endpoint="{% url 'profiles:achievements' %}">
+<div class="settings-grid layout-section layout-surface" data-achievement-endpoint="{% url 'profiles:achievements' %}">
     <section>
         <h2>Profile Information</h2>
         <form method="post">

@@ -9,12 +9,12 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
+<section class="page-header layout-section layout-section--compact">
     <h1>Register for {{ event.title }}</h1>
     <p>Secure your slot and get ready for an unforgettable run.</p>
 </section>
 
-<section class="registration-layout"
+<section class="registration-layout layout-section layout-section--flush"
          data-capacity="{{ event_capacity.limit|default:0 }}"
          data-registered="{{ event_capacity.registered|default:0 }}"
          data-endpoint="{% url 'registrations:mine-json' %}"
