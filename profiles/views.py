@@ -2,7 +2,13 @@ import json
 from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, JsonResponse
 from forum.models import ForumThread, ForumPost, PostReport
-from .forms import EventForm, ProfileForm, AccountSettingsForm, ProfileAchievementForm
+from .forms import (
+    EventForm,
+    ProfileForm,
+    AccountSettingsForm,
+    AccountPasswordForm,
+    ProfileAchievementForm,
+)
 from django.db.models import Count
 from .models import UserRaceHistory, RunnerAchievement, UserProfile
 from events.models import Event, EventCategory
