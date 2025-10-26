@@ -22,7 +22,7 @@ Visi kami adalah menjadikan Vacathon sebagai destinasi utama bagi komunitas pela
 
 ## 3. Daftar modul yang akan diimplementasikan
 ### 1. Main Menu
-  1. Banner utama berisi highlight event terbesar atau terdekat.
+  1. Banner utama berisi highlight event
   2. Navigasi ke halaman lain:
     - Daftar Marathon (event list)
     - Forum Diskusi
@@ -30,6 +30,10 @@ Visi kami adalah menjadikan Vacathon sebagai destinasi utama bagi komunitas pela
     - Tentang Kami/Kontak
   3. Menampilkan statistik singkat: jumlah peserta, lokasi aktif, sponsor, dll.
   4. Tombol “Daftar Sekarang” untuk event tertentu.
+  5. Video mengenai marathon
+  6. News mengenai marathon
+  7. Dekripsi singkat mengenai vacathon dan juga developer-nya
+  8. Penghubung dengan aplikasi lain
 
 ### 2. Daftar Event (Event Catalog)
   Tampilan Daftar Event:
