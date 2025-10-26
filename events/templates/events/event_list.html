@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Marathon Events | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/events.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Discover Marathon Events</h1>
+    <p>Use filters to find races that match your distance, schedule, and destination goals.</p>
+</section>
+
+<div class="filter-panel layout-section layout-surface">
+    <form id="event-filter-form" method="get" novalidate>
+        <div class="field">
+            {{ filter_form.q.label_tag }}
+            {{ filter_form.q }}
+        </div>
+        <div class="field">
+            {{ filter_form.city.label_tag }}
+            {{ filter_form.city }}
+        </div>
+        <div class="field">
+            {{ filter_form.status.label_tag }}
+            {{ filter_form.status }}
+        </div>
+        <div class="field">
+            {{ filter_form.category.label_tag }}
+            {{ filter_form.category }}
+        </div>
+        <div class="field">
+            {{ filter_form.sort_by.label_tag }}
+            {{ filter_form.sort_by }}
+        </div>
+        <button class="btn secondary" type="button" id="reset-filters">Reset filters</button>
+    </form>
+</div>
+
+{% url 'events:json' as events_json_url %}
+{% url 'event_detail:detail' slug='slug-placeholder' as detail_placeholder %}
+<div class="layout-section layout-section--flush">
+    <div id="events-container"
+     data-endpoint="{{ events_json_url|default:'#' }}"
+     data-detail-url-template="{{ detail_placeholder|default:'#' }}"
+     data-detail-slug-placeholder="slug-placeholder">
+    {% include "events/partials/event_grid.html" with events=events page_obj=page_obj paginator=paginator %}
+</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/events.js' %}"></script>
+{% endblock %}

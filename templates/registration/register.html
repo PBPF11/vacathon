@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Vacathon | Create account{% endblock %}
+
+{% block content %}
+<section class="auth-hero layout-section layout-section--compact">
+    <h1>Create your Vacathon account</h1>
+    <p>Join the community to plan races, track achievements, and connect with fellow runners.</p>
+</section>
+
+<section class="layout-section layout-section--compact">
+    <div class="auth-card layout-surface">
+        <h2>Sign up</h2>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <label class="form-field{% if field.errors %} has-error{% endif %}">
+                <span class="field-label">{{ field.label }}</span>
+                {{ field }}
+                {% if field.help_text %}
+                <small class="field-help">{{ field.help_text|safe }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                <span class="error">{{ error }}</span>
+                {% endfor %}
+            </label>
+            {% endfor %}
+
+            <button type="submit" class="btn primary full-width">Create account</button>
+        </form>
+
+        <div class="auth-footer">
+            <span>Already have an account?</span>
+            <a class="inline-link" href="{% url 'profiles:login' %}">Login here</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

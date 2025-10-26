@@ -1,0 +1,145 @@
+.registration-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+}
+
+.event-summary {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 1.75rem;
+    box-shadow: 0 16px 32px rgba(15, 48, 87, 0.1);
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+}
+
+.event-summary ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.registration-body {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px rgba(15, 48, 87, 0.1);
+    display: grid;
+    gap: 1.5rem;
+}
+
+.registration-form .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.registration-form .actions {
+    margin-top: 1rem;
+}
+
+.notice {
+    background: rgba(23, 127, 218, 0.08);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.registration-summary {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.summary-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+}
+
+.summary-list div {
+    background: rgba(23, 127, 218, 0.08);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.summary-list dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+}
+
+.summary-list dd {
+    margin: 0.25rem 0 0;
+    font-weight: 600;
+}
+
+.registration-summary .actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.registration-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+.registration-list li {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 14px 28px rgba(15, 48, 87, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.registration-list .status {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: end;
+}
+
+.badge.waitlisted {
+    background: rgba(250, 204, 21, 0.25);
+    color: #92400e;
+}
+
+.badge.confirmed {
+    background: rgba(187, 238, 99, 0.35);
+    color: #1a2e05;
+}
+
+.badge.pending {
+    background: rgba(23, 127, 218, 0.18);
+    color: var(--primary);
+}
+
+.badge.cancelled,
+.badge.rejected {
+    background: rgba(239, 68, 68, 0.14);
+    color: #7f1d1d;
+}
+
+@media (max-width: 960px) {
+    .registration-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .registration-list li {
+        flex-direction: column;
+    }
+
+    .registration-list .status {
+        justify-items: start;
+    }
+}

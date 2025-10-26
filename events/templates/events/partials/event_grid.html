@@ -1,0 +1,55 @@
+{% if events %}
+<div class="events-grid">
+    {% for event in events %}
+    <article class="event-card" data-event-id="{{ event.id }}">
+        <header>
+            <div class="status {{ event.status }}">
+                {{ event.get_status_display }}
+            </div>
+            <h3>{{ event.title }}</h3>
+            <p class="location">{{ event.city }}, {{ event.country }}</p>
+        </header>
+        <dl class="meta">
+            <div>
+                <dt>Start</dt>
+                <dd>{{ event.start_date|date:"M j, Y" }}</dd>
+            </div>
+            <div>
+                <dt>Register by</dt>
+                <dd>{{ event.registration_deadline|date:"M j, Y" }}</dd>
+            </div>
+            <div>
+                <dt>Popularity</dt>
+                <dd>{{ event.popularity_score }}</dd>
+            </div>
+        </dl>
+        <ul class="categories">
+            {% for category in event.categories.all %}
+            <li>{{ category.display_name }}</li>
+            {% empty %}
+            <li>No categories listed</li>
+            {% endfor %}
+        </ul>
+        {% url 'event_detail:detail' slug=event.slug as event_detail_url %}
+        <a class="btn primary" href="{{ event_detail_url|default:'#' }}">View details</a>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>No events match your filters yet</h3>
+    <p>Try adjusting the filters or clear them to see more events.</p>
+</div>
+{% endif %}
+
+{% if is_paginated %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}
+    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span class="page-info">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</nav>
+{% endif %}

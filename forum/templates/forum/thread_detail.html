@@ -1,0 +1,64 @@
+
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ thread.title }} | Vacathon Forum{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/forum.css' %}">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb layout-section layout-section--compact">
+    {% for crumb in breadcrumbs %}
+    <a href="{{ crumb.url|default:'#' }}" {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.label }}</a>
+    {% if not forloop.last %}
+    <span>&rsaquo;</span>
+    {% endif %}
+    {% endfor %}
+</nav>
+
+<article class="thread-view layout-section layout-surface">
+    <header class="thread-header">
+        <span class="badge">{{ thread.event.title }}</span>
+        <h1>{{ thread.title }}</h1>
+        <p class="subtitle">
+            Started by {{ thread.author.username }} &middot;
+            {{ thread.created_at|naturaltime }} &middot; {{ thread.view_count }} views
+        </p>
+        <p class="body">{{ thread.body|linebreaksbr }}</p>
+        {% url 'event_detail:detail' slug=thread.event.slug as event_url %}
+        <a class="btn outline" href="{{ event_url }}">View event details</a>
+    </header>
+
+    <section class="posts" data-post-endpoint="{% url 'forum:post-create' slug=thread.slug %}">
+        <h2>Replies</h2>
+        <div id="post-list">
+            {% for post in posts %}
+                {% include "forum/partials/post.html" with post=post %}
+                {% for reply in post.replies.all %}
+                    {% include "forum/partials/post.html" with post=reply is_reply=True %}
+                {% endfor %}
+            {% empty %}
+            <p>No responses yet. Start the conversation!</p>
+            {% endfor %}
+        </div>
+
+        {% if user.is_authenticated %}
+        <form id="post-form">
+            {% csrf_token %}
+            {{ post_form.content }}
+            <input type="hidden" name="parent" id="id_parent">
+            <button class="btn primary" type="submit">Post reply</button>
+            <button class="btn secondary hidden" type="button" id="cancel-reply">Cancel reply</button>
+        </form>
+        {% else %}
+        <p class="sign-in-hint">Log in to share your thoughts and join the discussion.</p>
+        {% endif %}
+    </section>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/forum.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Registrations | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/registrations.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>My Event Registrations</h1>
+    <p>Monitor registration statuses and stay informed before race day.</p>
+</section>
+
+<section class="registration-listing layout-section layout-section--flush"
+         data-endpoint="{% url 'registrations:mine-json' %}">
+    {% if registrations %}
+    <ul class="registration-list">
+        {% for registration in registrations %}
+        <li>
+            <div>
+                <h2>{{ registration.event.title }}</h2>
+                <p>{{ registration.event.start_date|date:"M j, Y" }} &middot; {{ registration.event.city }}, {{ registration.event.country }}</p>
+                <p>
+                    Distance:
+                    {% if registration.category %}
+                        {{ registration.category.display_name }}
+                    {% else %}
+                        {{ registration.distance_label|default:"Not specified" }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="status">
+                <span class="badge {{ registration.status }}">{{ registration.get_status_display }}</span>
+                <a class="btn outline" href="{% url 'registrations:detail' reference=registration.reference_code %}">View details</a>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <h3>No registrations yet</h3>
+        <p>Browse <a href="{% url 'events:list' %}">events</a> to discover your next run.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/registrations.js' %}"></script>
+{% endblock %}

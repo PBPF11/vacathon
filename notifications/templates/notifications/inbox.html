@@ -1,0 +1,66 @@
+
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Notifications | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Notifications</h1>
+    <p>Stay updated with registration decisions and event announcements.</p>
+</section>
+
+<section class="notifications-inbox layout-section layout-surface"
+         data-endpoint="{% url 'notifications:inbox-json' %}">
+    <header>
+        <span>{{ unread_count }} unread</span>
+        <button class="btn secondary" type="button" data-refresh-notifications>Refresh</button>
+    </header>
+    {% if notifications %}
+    <ul class="notification-list">
+        {% for note in notifications %}
+        <li class="{% if not note.is_read %}unread{% endif %}{% if 'cancelled' in note.title|lower or 'cancelled' in note.message|lower %} cancelled{% endif %}" data-notification-id="{{ note.id }}">
+            <div>
+                <h2>{{ note.title }}</h2>
+                <p>{{ note.message }}</p>
+                <p class="meta">{{ note.created_at|naturaltime }}</p>
+            </div>
+            <div class="actions">
+                {% if note.link_url %}
+                <a class="link" href="{{ note.link_url }}">Open</a>
+                {% endif %}
+                {% if not note.is_read %}
+                <button class="link-button" data-mark-read
+                        data-endpoint="{% url 'notifications:mark-read' note.id %}">Mark as read</button>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+        <h3>You're all caught up!</h3>
+        <p>Registrations and system alerts will appear here.</p>
+    </div>
+    {% endif %}
+    {% if is_paginated %}
+    <nav class="pagination layout-section layout-section--compact">
+        {% if page_obj.has_previous %}
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/notifications.js' %}"></script>
+{% endblock %}

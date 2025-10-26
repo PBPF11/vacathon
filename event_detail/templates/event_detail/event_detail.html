@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ event.title }} | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/event_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+{% include "registrations/modal_form.html" %}
+<nav class="breadcrumb layout-section layout-section--compact">
+    {% for crumb in breadcrumbs %}
+    <a href="{{ crumb.url|default:'#' }}" {% if forloop.last %}aria-current="page"{% endif %}>{{ crumb.label }}</a>
+    {% if not forloop.last %}
+    <span>&rsaquo;</span>
+    {% endif %}
+    {% endfor %}
+</nav>
+
+<article class="event-overview layout-section layout-section--flush"
+         data-event-slug="{{ event.slug }}"
+         data-detail-endpoint="{% url 'event_detail:detail-json' slug=event.slug %}"
+         data-availability-endpoint="{% url 'event_detail:availability-json' slug=event.slug %}">
+    <header class="overview-header" {% if event.banner_image %}style="background-image: url('{{ event.banner_image }}');"{% endif %}>
+        <div class="overlay">
+            <span class="status badge {{ event.status }}">{{ event.get_status_display }}</span>
+            <h1>{{ event.title }}</h1>
+            <p class="location">{{ event.city }}, {{ event.country }}</p>
+            <p class="period">
+                {{ event.start_date|date:"M j, Y" }}
+                {% if event.end_date %}&ndash; {{ event.end_date|date:"M j, Y" }}{% endif %}
+            </p>
+            <div class="categories">
+                {% for category in event.categories.all %}
+                <span class="chip">{{ category.display_name }}</span>
+                {% empty %}
+                <span class="chip muted">Categories TBA</span>
+                {% endfor %}
+            </div>
+        </div>
+    </header>
+
+    <section class="event-summary">
+        <div>
+            <h2>Why join?</h2>
+            <p>{{ event.description|linebreaksbr }}</p>
+        </div>
+        <aside class="key-details">
+            <h3>Key Facts</h3>
+            <dl>
+                <div>
+                    <dt>Venue</dt>
+                    <dd>{{ event.venue|default:"TBA" }}</dd>
+                </div>
+                <div>
+                    <dt>Registration opens</dt>
+                    <dd>
+                        {% if event.registration_open_date %}
+                            {{ event.registration_open_date|date:"M j, Y" }}
+                        {% else %}
+                            TBA
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Registration closes</dt>
+                    <dd>{{ event.registration_deadline|date:"M j, Y" }}</dd>
+                </div>
+                <div>
+                    <dt>Capacity</dt>
+                    <dd>
+                        {% if event.participant_limit %}
+                            {{ event.registered_count }} / {{ event.participant_limit }} slots
+                        {% else %}
+                            Unlimited
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </aside>
+    </section>
+
+    <section class="registration-status">
+        <header>
+            <h2>Registration Status</h2>
+            <p data-availability-label>
+                {% if is_registration_open %}
+                    Registration is open. Secure your bib today!
+                {% else %}
+                    Registration is currently closed.
+                {% endif %}
+            </p>
+        </header>
+        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ capacity_ratio }}">
+            <div class="progress-fill" style="width: {{ capacity_ratio }}%"></div>
+        </div>
+        <div class="capacity-meta">
+            {% if remaining_slots is not None %}
+            <span data-capacity-remaining>{{ remaining_slots }} slots remaining</span>
+            {% endif %}
+            <span data-capacity-ratio>{{ capacity_ratio }}% capacity</span>
+            {% if event.registration_open_date %}
+            <span>Opened: {{ event.registration_open_date|date:"M j, Y" }}</span>
+            {% endif %}
+            <span>Deadline: {{ event.registration_deadline|date:"M j, Y" }}</span>
+        </div>
+        {% if registration_cta_url %}
+        <button class="btn primary" type="button" data-open-registration-modal>Proceed to Registration</button>
+        {% else %}
+        <button class="btn primary" type="button" disabled>Registration Module Coming Soon</button>
+        {% endif %}
+        {% if forum_threads_url %}
+        <a class="btn outline" href="{{ forum_threads_url }}">Discuss this event on the forum</a>
+        {% endif %}
+        {% if marathon_map_url %}
+        <div class="registration-map">
+            <iframe
+                src="{{ marathon_map_url }}"
+                width="100%"
+                height="260"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="route-highlights">
+        <header>
+            <h2>Route Highlights</h2>
+            <p>Explore the marathon experience from start to finish. Data updates asynchronously.</p>
+        </header>
+        <div class="segments" data-route-container>
+            {% for segment in route_segments %}
+            <article>
+                <div class="segment-order">{{ segment.order }}</div>
+                <div>
+                    <h3>{{ segment.title }}</h3>
+                    <p class="distance">{{ segment.distance_km }} KM &middot; {{ segment.elevation_gain }} m elevation</p>
+                    <p>{{ segment.description }}</p>
+                </div>
+            </article>
+            {% empty %}
+            <p>No route segments recorded yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="aid-stations">
+        <header>
+            <h2>Aid Stations</h2>
+            <p>Stay fueled across the course. Checkpoints are refreshed dynamically via AJAX.</p>
+        </header>
+        <div class="stations-grid" data-aid-container>
+            {% for station in aid_stations %}
+            <article class="station">
+                <h3>{{ station.name }}</h3>
+                <p class="marker">{{ station.kilometer_marker }} KM</p>
+                <p>{{ station.supplies }}</p>
+                {% if station.is_medical %}<span class="badge accent">Medical</span>{% endif %}
+            </article>
+            {% empty %}
+            <p>No aid stations posted yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="schedule">
+        <header>
+            <h2>Weekend Schedule</h2>
+            <p>Plan your travel, expo visit, and race-day timeline.</p>
+        </header>
+        <ol class="schedule-timeline" data-schedule-container>
+            {% for item in schedules %}
+            <li>
+                <div class="time">{{ item.start_time|date:"M j, H:i" }}</div>
+                <div>
+                    <h3>{{ item.title }}</h3>
+                    {% if item.end_time %}
+                    <p class="time-range">{{ item.end_time|date:"H:i" }}</p>
+                    {% endif %}
+                    <p>{{ item.description }}</p>
+                </div>
+            </li>
+            {% empty %}
+            <li>No schedule details available yet.</li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    {% if documents %}
+    <section class="documents">
+        <header>
+            <h2>Documents & Downloads</h2>
+        </header>
+        <ul>
+            {% for document in documents %}
+            <li>
+                <a href="{{ document.document_url }}" target="_blank" rel="noopener">
+                    {{ document.title }} &mdash; {{ document.get_document_type_display }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/event_detail.js' %}"></script>
+{% endblock %}

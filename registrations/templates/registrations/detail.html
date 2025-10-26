@@ -1,0 +1,69 @@
+
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Registration {{ registration.reference_code }} | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/registrations.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Registration Summary</h1>
+    <p>Keep this reference handy for future updates or check-in.</p>
+</section>
+
+<article class="registration-summary layout-section layout-surface">
+    <header>
+        <h2>{{ registration.event.title }}</h2>
+        <p>{{ registration.event.start_date|date:"M j, Y" }} &middot; {{ registration.event.city }}, {{ registration.event.country }}</p>
+    </header>
+    <dl class="summary-list">
+        <div>
+            <dt>Reference Code</dt>
+            <dd>{{ registration.reference_code }}</dd>
+        </div>
+        <div>
+            <dt>Distance</dt>
+            <dd>
+                {% if registration.category %}
+                    {{ registration.category.display_name }}
+                {% else %}
+                    {{ registration.distance_label|default:"Not specified" }}
+                {% endif %}
+            </dd>
+        </div>
+        <div>
+            <dt>Status</dt>
+            <dd><span class="badge {{ registration.status }}">{{ registration.get_status_display }}</span></dd>
+        </div>
+        <div>
+            <dt>Payment</dt>
+            <dd>{{ registration.get_payment_status_display }}</dd>
+        </div>
+        <div>
+            <dt>Submitted</dt>
+            <dd>{{ registration.created_at|naturaltime }}</dd>
+        </div>
+        <div>
+            <dt>Emergency Contact</dt>
+            <dd>{{ registration.emergency_contact_name }} ({{ registration.emergency_contact_phone }})</dd>
+        </div>
+        <div>
+            <dt>Phone Number</dt>
+            <dd>{{ registration.phone_number }}</dd>
+        </div>
+        {% if registration.medical_notes %}
+        <div>
+            <dt>Medical Notes</dt>
+            <dd>{{ registration.medical_notes }}</dd>
+        </div>
+        {% endif %}
+    </dl>
+    <footer class="actions">
+        <a class="btn primary" href="{{ dashboard_url }}">Return to dashboard</a>
+        <a class="btn secondary" href="{{ event_url }}">View event</a>
+    </footer>
+</article>
+{% endblock %}

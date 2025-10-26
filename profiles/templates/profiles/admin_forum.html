@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Forum Moderation | Admin Panel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Forum Moderation</h1>
+    <p>Manage reported posts and threads. Total reports: <strong>{{ total_reports }}</strong></p>
+</section>
+
+{% if posts %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Thread / Post Content</th>
+            <th>Author</th>
+            <th>Event</th>
+            <th>Posted At</th>
+            <th>Reports</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in posts %}
+        <tr>
+            <td>
+                <strong>Thread: {{ item.thread.title }}</strong><br>
+                <small>{{ item.post.content|truncatewords:20 }}</small>
+            </td>
+            <td>{{ item.post.author.username }}</td>
+            <td>{{ item.thread.event.title }}</td>
+            <td>{{ item.post.created_at|date:"M d, Y H:i" }}</td>
+            <td>
+                {% for report in item.reports %}
+                    <div style="margin-bottom: 8px; padding: 4px; background: #f5f5f5; border-radius: 4px;">
+                        <strong>{{ report.reporter.username }}</strong>: {{ report.reason }}<br>
+                        <small style="color: #666;">{{ report.created_at|date:"M d, H:i" }}</small>
+                        <form action="{% url 'profiles:admin-forum-resolve' report.id %}" method="POST" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn small" style="padding: 2px 8px; font-size: 12px;">Resolve</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </td>
+            <td>
+                <form action="{% url 'profiles:admin-forum-delete' item.post.id %}" method="POST" style="display:inline; margin-bottom: 4px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn danger small" onclick="return confirm('Delete this post? This action cannot be undone.');">Delete Post</button>
+                </form>
+                <br>
+                <form action="{% url 'profiles:admin-forum-pinned' item.post.id %}" method="POST" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn outline small">
+                        {% if item.thread.is_pinned %}Unpin Thread{% else %}Pin Thread{% endif %}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="padding: 40px; text-align: center; background: #f9f9f9; border-radius: 8px;">
+    <h3>🎉 No Reported Posts</h3>
+    <p>All clear! No posts have been reported or all reports have been resolved.</p>
+</div>
+{% endif %}
+
+<a href="{% url 'profiles:admin-dashboard' %}" class="btn outline">Back to Dashboard</a>
+{% endblock %}

@@ -1,0 +1,72 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Community Forum | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/forum.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Community Forum</h1>
+    <p>Swap insights, race strategies, and travel hacks with fellow Vacathon runners.</p>
+</section>
+
+<section class="forum-controls layout-section layout-surface">
+    <form id="thread-filter-form" method="get" novalidate>
+        <div class="field">
+            <label for="id_event">Event</label>
+            <select name="event" id="id_event" class="control">
+                <option value="">All events</option>
+                {% for event in events %}
+                <option value="{{ event.id }}" {% if active_event|stringformat:"s" == event.id|stringformat:"s" %}selected{% endif %}>
+                    {{ event.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="id_q">Keyword</label>
+            <input type="text" name="q" id="id_q" class="control" value="{{ search_term }}" placeholder="Search thread titles or keywords">
+        </div>
+        <div class="field">
+            <label for="id_sort">Sort</label>
+            <select name="sort" id="id_sort" class="control">
+                <option value="recent" {% if sort == "recent" %}selected{% endif %}>Recently active</option>
+                <option value="latest" {% if sort == "latest" %}selected{% endif %}>Newest threads</option>
+                <option value="popular" {% if sort == "popular" %}selected{% endif %}>Most replies</option>
+            </select>
+        </div>
+        <button class="btn secondary" type="submit">Apply</button>
+        <button class="btn outline" type="button" id="reset-thread-filters">Reset</button>
+    </form>
+    {% if user.is_authenticated %}
+    <a class="btn primary" href="{% url 'forum:thread-create' %}">Start a new thread</a>
+    {% else %}
+    <p class="sign-in-hint">Log in to create threads and join the conversation.</p>
+    {% endif %}
+</section>
+
+{% url 'forum:threads-json' as threads_endpoint %}
+<section class="thread-list layout-section layout-section--flush" data-endpoint="{{ threads_endpoint }}">
+    {% include "forum/partials/thread_list.html" with threads=threads %}
+</section>
+
+{% if is_paginated %}
+<nav class="pagination layout-section layout-section--compact">
+    {% if page_obj.has_previous %}
+    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span class="page-info">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/forum.js' %}"></script>
+{% endblock %}

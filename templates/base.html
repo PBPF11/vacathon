@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Vacathon{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar">
+            {% url 'core:home' as home_url %}
+            <a class="brand" href="{{ home_url|default:'#' }}">Vacathon</a>
+
+            <!-- Links Navigasi Tengah -->
+            <div class="nav-links">
+                <a href="{{ home_url|default:'#' }}">Home</a>
+
+                {% if user.is_authenticated %}
+                    <!-- Tautan ini HANYA muncul jika user sudah login -->
+                    {% url 'events:list' as events_url %}
+                    <a href="{{ events_url|default:'#' }}">Events</a>
+                    {% url 'forum:index' as forum_url %}
+                    <a href="{{ forum_url|default:'#' }}">Forum</a>
+                    {% url 'registrations:mine' as registrations_url %}
+                    <a href="{{ registrations_url|default:'#' }}">My Registrations</a>
+                    {% url 'notifications:inbox' as notifications_url %}
+                    <a href="{{ notifications_url|default:'#' }}">
+                        Notifications{% if notifications_unread_count %} ({{ notifications_unread_count }}){% endif %}
+                    </a>
+                    {% if user.is_staff %}
+                        {% url 'profiles:admin-dashboard' as admin_dashboard_url %}
+                        <a href="{{ admin_dashboard_url|default:'#' }}">Admin Dashboard</a>
+                    {% endif %}
+                {% endif %}
+
+                <!-- My Account sekarang di sini, selalu terlihat -->
+                {% url 'profiles:dashboard' as dashboard_url %}
+                <a href="{{ dashboard_url|default:'#' }}">My Account</a>
+
+                {% url 'core:about' as about_url %}
+                <a href="{{ about_url|default:'#' }}">About</a>
+
+                <!-- Menampilkan Welcome & Logout DIHAPUS sesuai permintaan -->
+                <!-- 
+                {% if user.is_authenticated %}
+                    <span class="nav-welcome" style="margin-left: 20px; margin-right: 10px;"> 
+                        Welcome, {{ user.first_name|default:user.username }}!
+                    </span>
+                    <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-button">Logout</button> 
+                    </form>
+                {% endif %} 
+                -->
+            </div>
+
+            <!-- Blok Otentikasi Kanan DIHAPUS karena branch ini tidak punya Sign In/Sign Up -->
+
+        </nav>
+    </header>
+    <main class="main-content">
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <p>&copy; {{ current_year|default:2025 }} Vacathon. All rights reserved.</p>
+    </footer>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

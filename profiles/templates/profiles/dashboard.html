@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}My Dashboard | Vacathon{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/profiles.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header layout-section layout-section--compact">
+    <h1>Welcome back, {{ profile.full_display_name }}!</h1>
+    <p>Track your marathon journey, upcoming events, and achievements in one place.</p>
+</section>
+
+<div class="profile-dashboard layout-section layout-section--flush"
+     data-profile-endpoint="{% url 'profiles:profile-json' %}"
+     data-achievement-endpoint="{% url 'profiles:achievements' %}">
+    <aside class="profile-card">
+        <div class="avatar">
+            {% if profile.avatar_url %}
+            <img src="{{ profile.avatar_url }}" alt="{{ profile.full_display_name }} avatar">
+            {% else %}
+            <div class="initials">{{ profile.user.username|first|upper }}</div>
+            {% endif %}
+        </div>
+        <h2>{{ profile.full_display_name }}</h2>
+        <p class="location">
+            {% if profile.city or profile.country %}
+                {{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}
+            {% else %}
+                Location not set
+            {% endif %}
+        </p>
+        <p class="bio">{{ profile.bio|default:"Tell the community about your running story." }}</p>
+        <a class="btn secondary" href="{% url 'profiles:edit' %}">Edit profile</a>
+        <a class="btn outline" href="{% url 'profiles:settings' %}">Account settings</a>
+
+        <!-- Tambahan: Tombol Logout -->
+        <form method="post" action="{% url 'logout' %}" style="margin-top: 10px;">
+            {% csrf_token %}
+            <button type="submit" class="btn danger">Logout</button>
+        </form>
+    </aside>
+
+    <section class="dashboard-main">
+        <div class="stats-grid">
+            <article class="stat-card">
+                <span class="label">Total Events</span>
+                <span class="value" data-stat-total>{{ stats.total_events }}</span>
+            </article>
+            <article class="stat-card">
+                <span class="label">Completed</span>
+                <span class="value" data-stat-completed>{{ stats.completed }}</span>
+            </article>
+            <article class="stat-card">
+                <span class="label">Upcoming</span>
+                <span class="value" data-stat-upcoming>{{ stats.upcoming }}</span>
+            </article>
+        </div>
+
+        <section class="next-event">
+            <header>
+                <h2>Next Marathon</h2>
+                {% if next_event %}
+                <a class="link" href="{{ next_event.event.get_absolute_url }}">View event</a>
+                {% endif %}
+            </header>
+            {% if next_event %}
+            <article class="highlight">
+                <h3>{{ next_event.event.title }}</h3>
+                <p>{{ next_event.event.start_date|date:"M j, Y" }} &middot; {{ next_event.event.city }}, {{ next_event.event.country }}</p>
+                <p class="status">Status: {{ next_event.get_status_display }}</p>
+            </article>
+            {% else %}
+            <p>No upcoming marathons yet. Browse <a href="{% url 'events:list' %}">events</a> to start planning.</p>
+            {% endif %}
+        </section>
+
+        <section class="history">
+            <header>
+                <h2>Event History</h2>
+            </header>
+            <div class="history-tables">
+                <div>
+                    <h3>Upcoming & Registered</h3>
+                    <ul class="history-list" data-history-upcoming>
+                        {% for entry in upcoming_history %}
+                        <li>
+                            <strong>{{ entry.event.title }}</strong>
+                            <span>{{ entry.event.start_date|date:"M j, Y" }}</span>
+                            <span class="badge">{{ entry.get_status_display }}</span>
+                        </li>
+                        {% empty %}
+                        <li>No upcoming events yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <h3>Completed</h3>
+                    <ul class="history-list" data-history-completed>
+                        {% for entry in completed_history %}
+                        <li>
+                            <strong>{{ entry.event.title }}</strong>
+                            <span>{{ entry.finish_time|default:"-" }}</span>
+                            <span class="badge accent">Completed</span>
+                        </li>
+                        {% empty %}
+                        <li>No completed events yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="achievements">
+            <header>
+                <h2>Achievements</h2>
+                <button class="btn primary" data-open-achievement-modal type="button">Add achievement</button>
+            </header>
+            <div class="achievement-grid" data-achievement-grid>
+                {% for achievement in achievements %}
+                <article class="achievement-card" data-achievement-id="{{ achievement.id }}">
+                    <h3>{{ achievement.title }}</h3>
+                    {% if achievement.achieved_on %}
+                    <p class="meta">{{ achievement.achieved_on|date:"M j, Y" }}</p>
+                    {% endif %}
+                    <p>{{ achievement.description }}</p>
+                    <footer>
+                        {% if achievement.link %}
+                        <a class="link" href="{{ achievement.link }}" target="_blank" rel="noopener">View proof</a>
+                        {% endif %}
+                        <button class="link-button" data-delete-achievement type="button"
+                                data-delete-url="{% url 'profiles:achievement-delete' achievement.id %}">Remove</button>
+                    </footer>
+                </article>
+                {% empty %}
+                <p>No achievements logged yet. Celebrate your milestones!</p>
+                {% endfor %}
+            </div>
+        </section>
+    </section>
+</div>
+
+<dialog class="modal" data-achievement-modal>
+    <form method="dialog" class="modal-content" data-achievement-form>
+        <h2>New Achievement</h2>
+        <label>
+            Title
+            <input class="control" type="text" name="title" required>
+        </label>
+        <label>
+            Description
+            <textarea class="control" name="description" rows="3"></textarea>
+        </label>
+        <label>
+            Achieved on
+            <input class="control" type="date" name="achieved_on">
+        </label>
+        <label>
+            Link
+            <input class="control" type="url" name="link" placeholder="https://">
+        </label>
+        <div class="actions">
+            <button class="btn secondary" data-close-modal type="button">Cancel</button>
+            <button class="btn primary" type="submit">Save achievement</button>
+        </div>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/profiles.js' %}"></script>
+{% endblock %}
