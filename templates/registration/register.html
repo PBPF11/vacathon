@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-<<<<<<< HEAD
 
 {% block title %}Vacathon | Create account{% endblock %}
 
@@ -45,14 +44,4 @@
         </div>
     </div>
 </section>
-=======
-{% block content %}
-  <h2>Register</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Register</button>
-  </form>
-  <p>Already have an account? <a href="{% url 'profiles:login' %}">Login here</a></p>
->>>>>>> d2b40dc03bf482354a4bff5acb820d5cb84cadd8
 {% endblock %}
