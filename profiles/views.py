@@ -12,7 +12,7 @@ from .forms import (
 from django.db.models import Count
 from .models import UserRaceHistory, RunnerAchievement, UserProfile
 from events.models import Event, EventCategory
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -25,7 +25,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+from django.db import IntegrityError
 
 def is_admin(user):
     return user.is_staff or user.is_superuser
@@ -505,3 +507,93 @@ def admin_forum_resolve(request, report_id):
         report.save()
         messages.success(request, "Report has been resolved!")
     return redirect('profiles:admin-forum')
+
+@csrf_exempt
+def login_api(request):
+    if request.method == 'POST':
+        # --- UPDATE DISINI: Handle JSON atau Form Data ---
+        try:
+            # Coba baca sebagai JSON
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            # Jika error, berarti dikirim sebagai Form Data biasa (request.POST)
+            data = request.POST
+        
+        # Ambil username/password dari data yang sudah diproses
+        username = data.get('username')
+        password = data.get('password')
+        # --------------------------------------------------
+
+        user = authenticate(username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return JsonResponse({
+                "status": True,
+                "message": "Berhasil login!",
+                "username": username,
+            }, status=200)
+        else:
+            return JsonResponse({
+                "status": False,
+                "message": "Username atau password salah.",
+            }, status=401)
+    return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def logout_api(request):
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({
+            "status": True,
+            "message": "Berhasil logout!",
+        }, status=200)
+    return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+
+@csrf_exempt
+def register_api(request):
+    if request.method == 'POST':
+        # --- UPDATE DISINI JUGA ---
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = request.POST
+        
+        username = data.get('username')
+        password = data.get('password')
+        # --------------------------
+        
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({"status": False, "message": "Username sudah digunakan"}, status=400)
+        
+        try:
+            user = User.objects.create_user(username=username, password=password)
+            user.save()
+            return JsonResponse({"status": True, "message": "Akun berhasil dibuat!"}, status=201)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": False, "message": "Method not allowed"}, status=405)
+
+def user_profile_json(request):
+    # Mengambil data user yang sedang login (Session-based)
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": False, "message": "Belum login"}, status=401)
+
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    
+    # Format JSON sesuai UserProfile.fromJson di Flutter
+    return JsonResponse({
+        "id": profile.id,
+        "username": request.user.username,
+        "display_name": profile.full_display_name,
+        "bio": profile.bio,
+        "city": profile.city,
+        "country": profile.country,
+        "avatar_url": profile.avatar_url,
+        "favorite_distance": profile.favorite_distance,
+        "created_at": profile.created_at.isoformat(),
+        "updated_at": profile.updated_at.isoformat(),
+        "history": [], # Tambahkan logika history jika perlu
+        "achievements": [] # Tambahkan logika achievements jika perlu
+    })
