@@ -139,6 +139,8 @@ def event_detail_json(request, slug):
         ],
         "route_segments": [
             {
+                "id": segment.id,
+                "event": event.id,
                 "order": segment.order,
                 "title": segment.title,
                 "distance_km": float(segment.distance_km),
@@ -149,6 +151,8 @@ def event_detail_json(request, slug):
         ],
         "aid_stations": [
             {
+                "id": station.id,
+                "event": event.id,
                 "name": station.name,
                 "kilometer_marker": float(station.kilometer_marker),
                 "supplies": station.supplies,
@@ -158,6 +162,8 @@ def event_detail_json(request, slug):
         ],
         "schedules": [
             {
+                "id": item.id,
+                "event": event.id,
                 "title": item.title,
                 "start_time": item.start_time.isoformat(),
                 "end_time": item.end_time.isoformat() if item.end_time else None,
@@ -167,9 +173,12 @@ def event_detail_json(request, slug):
         ],
         "documents": [
             {
+                "id": doc.id,             
+                "event": event.id,      
                 "title": doc.title,
                 "url": doc.document_url,
                 "type": doc.document_type,
+                "uploaded_by": doc.uploaded_by,
                 "uploaded_at": doc.uploaded_at.isoformat(),
             }
             for doc in event.documents.all()

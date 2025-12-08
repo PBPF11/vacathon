@@ -8,6 +8,8 @@ from .views import (
     report_post,
     threads_json,
     toggle_like,
+    api_thread_posts,
+    create_thread_json,
 )
 
 app_name = "forum"
@@ -20,4 +22,6 @@ urlpatterns = [
     path("posts/<int:post_id>/like/", toggle_like, name="post-like"),
     path("posts/<int:post_id>/report/", report_post, name="post-report"),
     path("api/threads/", threads_json, name="threads-json"),
+    path("api/threads/<slug:slug>/posts/", api_thread_posts, name="api-thread-posts"),
+    path("api/threads/create/", create_thread_json, name="api-thread-create"),
 ]
