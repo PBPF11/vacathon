@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, FormView, ListView
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
 
 from events.models import Event
 from profiles.models import UserProfile
@@ -151,18 +152,28 @@ def my_registrations_json(request):
     return JsonResponse({"results": results})
 
 
+@csrf_exempt # Tambahkan ini untuk memudahkan testing API dari mobile
 @login_required
 @require_POST
 def register_ajax(request, slug):
-    """AJAX endpoint for modal registration form submission."""
+    """AJAX/API endpoint for modal registration form submission."""
     event = get_object_or_404(Event.objects.prefetch_related("categories"), slug=slug)
 
-    # Check if user is already registered
+    # Cek existing registration
     existing_registration = EventRegistration.objects.filter(
         user=request.user, event=event
     ).select_related("category").first()
 
-    form = RegistrationForm(request.POST, event=event, user=request.user, instance=existing_registration)
+    # Handle JSON body dari Flutter atau Form Data biasa
+    import json
+    try:
+        data = json.loads(request.body)
+        # Flutter mengirim field category sebagai string ID, kita perlu sesuaikan jika form mengharapkan int
+        # Tapi RegistrationForm Django cukup pintar handling string digit.
+    except json.JSONDecodeError:
+        data = request.POST
+
+    form = RegistrationForm(data, event=event, user=request.user, instance=existing_registration)
 
     if form.is_valid():
         waitlisted = form.cleaned_data.pop("waitlisted", False)
@@ -173,6 +184,8 @@ def register_ajax(request, slug):
             if waitlisted
             else EventRegistration.Status.PENDING
         )
+        
+        # Simpan/Update
         registration, created = EventRegistration.objects.update_or_create(
             user=request.user,
             event=event,
@@ -185,19 +198,66 @@ def register_ajax(request, slug):
                 "medical_notes": form.cleaned_data.get("medical_notes", ""),
                 "status": status,
                 "form_payload": {
-                    "submitted_via": "modal",
+                    "submitted_via": "api",
                 },
             },
         )
 
+        # Helper sederhana untuk serialize Event (agar Event.fromJson di Flutter tidak error)
+        def serialize_event(evt):
+            return {
+                "id": evt.id,
+                "title": evt.title,
+                "slug": evt.slug,
+                "description": evt.description,
+                "city": evt.city,
+                "country": evt.country,
+                "venue": evt.venue,
+                "start_date": evt.start_date.isoformat(),
+                "end_date": evt.end_date.isoformat() if evt.end_date else None,
+                "registration_open_date": evt.registration_open_date.isoformat() if evt.registration_open_date else None,
+                "registration_deadline": evt.registration_deadline.isoformat(),
+                "status": evt.status,
+                "popularity_score": evt.popularity_score,
+                "participant_limit": evt.participant_limit,
+                "registered_count": evt.registered_count,
+                "featured": evt.featured,
+                "banner_image": evt.banner_image,
+                "categories": [], # Kosongkan untuk ringkas, atau isi jika perlu
+                "created_at": evt.created_at.isoformat(),
+                "updated_at": evt.updated_at.isoformat(),
+            }
+
+        # Return JSON lengkap sesuai model Flutter EventRegistration
         return JsonResponse({
             "success": True,
             "message": "Registration submitted successfully." if created else "Registration updated successfully.",
             "registration_url": reverse("registrations:detail", kwargs={"reference": registration.reference_code}),
+            # Data objek untuk Flutter:
+            "id": str(registration.id),
+            "reference_code": registration.reference_code,
+            "user": registration.user.id,
+            "user_username": registration.user.username,
+            "event": serialize_event(event), # Nested Event Object
+            "category": registration.category.id if registration.category else None,
+            "category_display_name": registration.category.display_name if registration.category else None,
+            "distance_label": registration.distance_label,
+            "phone_number": registration.phone_number,
+            "emergency_contact_name": registration.emergency_contact_name,
+            "emergency_contact_phone": registration.emergency_contact_phone,
+            "medical_notes": registration.medical_notes,
+            "status": registration.status,
+            "payment_status": registration.payment_status,
+            "form_payload": registration.form_payload,
+            "decision_note": registration.decision_note,
+            "created_at": registration.created_at.isoformat(),
+            "updated_at": registration.updated_at.isoformat(),
+            "confirmed_at": registration.confirmed_at.isoformat() if registration.confirmed_at else None,
+            "cancelled_at": registration.cancelled_at.isoformat() if registration.cancelled_at else None,
         })
 
     return JsonResponse({
         "success": False,
         "errors": form.errors,
         "non_field_errors": form.non_field_errors(),
-    })
+    }, status=400)

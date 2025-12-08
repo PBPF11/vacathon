@@ -2,6 +2,7 @@ import json
 from django.template.loader import render_to_string
 from django.http import HttpResponseRedirect, JsonResponse
 from forum.models import ForumThread, ForumPost, PostReport
+
 from .forms import (
     EventForm,
     ProfileForm,
@@ -24,7 +25,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.db import IntegrityError
@@ -597,3 +598,56 @@ def user_profile_json(request):
         "history": [], # Tambahkan logika history jika perlu
         "achievements": [] # Tambahkan logika achievements jika perlu
     })
+
+@csrf_exempt
+@login_required
+@require_POST
+def update_profile_json(request):
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+
+        # Update User fields (jika ada)
+        # user.first_name = data.get('first_name', user.first_name)
+        # user.save()
+
+        # Update Profile fields
+        profile.display_name = data.get('display_name', profile.display_name)
+        profile.bio = data.get('bio', profile.bio)
+        profile.city = data.get('city', profile.city)
+        profile.country = data.get('country', profile.country)
+        profile.favorite_distance = data.get('favorite_distance', profile.favorite_distance)
+        profile.emergency_contact_name = data.get('emergency_contact_name', profile.emergency_contact_name)
+        profile.emergency_contact_phone = data.get('emergency_contact_phone', profile.emergency_contact_phone)
+        profile.website = data.get('website', profile.website)
+        profile.instagram_handle = data.get('instagram_handle', profile.instagram_handle)
+        
+        # Handle tanggal lahir (parse string ISO 8601 dari Flutter)
+        birth_date_str = data.get('birth_date')
+        if birth_date_str:
+            try:
+                # Ambil bagian tanggal saja 'YYYY-MM-DD' jika formatnya panjang
+                profile.birth_date = birth_date_str.split('T')[0] 
+            except:
+                pass
+
+        profile.save()
+
+        return JsonResponse({
+            'status': True, 
+            'message': 'Profil berhasil diperbarui',
+            # Kembalikan data profil terbaru agar UI bisa langsung update
+            'profile': {
+                "id": profile.id,
+                "username": user.username,
+                "display_name": profile.full_display_name,
+                "bio": profile.bio,
+                "city": profile.city,
+                "country": profile.country,
+                # ... tambahkan field lain jika perlu untuk respons instan
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)

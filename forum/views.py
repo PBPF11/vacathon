@@ -9,6 +9,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, ListView, CreateView
 from django.template.loader import render_to_string
 from django.db.models import Count, Q, F
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 from events.models import Event
 from .forms import PostForm, ThreadForm
@@ -135,8 +137,15 @@ def threads_json(request):
 
     threads_payload = [
         {
+            "id": thread.id,
+            "event": thread.event.id,
+            "author": thread.author.id,
+            "author_username": thread.author.username,
             "title": thread.title,
             "slug": thread.slug,
+            "body": thread.body,
+            "created_at": thread.created_at.isoformat(),
+            "updated_at": thread.updated_at.isoformat(),
             "url": reverse("forum:thread-detail", kwargs={"slug": thread.slug}),
             "event": thread.event.title,
             "author": thread.author.username,
@@ -150,38 +159,120 @@ def threads_json(request):
     ]
     return JsonResponse({"results": threads_payload})
 
+@require_GET
+def api_thread_posts(request, slug):
+    thread = get_object_or_404(ForumThread, slug=slug)
+    posts = thread.posts.select_related("author").order_by("created_at")
+    
+    # Pagination sederhana jika perlu
+    from django.core.paginator import Paginator
+    paginator = Paginator(posts, 20)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
 
+    posts_data = [
+        {
+            "id": post.id,
+            "thread": thread.id,
+            "author": post.author.id,
+            "author_username": post.author.username,
+            "parent": post.parent_id,
+            "content": post.content,
+            "created_at": post.created_at.isoformat(),
+            "updated_at": post.updated_at.isoformat(),
+            "likes_count": post.likes.count(),
+            "is_liked_by_user": request.user in post.likes.all() if request.user.is_authenticated else False
+        }
+        for post in page_obj
+    ]
+
+    return JsonResponse({
+        "results": posts_data,
+        "total": paginator.count,
+        "has_next": page_obj.has_next()
+    })
+
+@csrf_exempt
+@login_required
+@require_POST
+def create_thread_json(request):
+    try:
+        data = json.loads(request.body)
+        event_id = data.get('event')
+        title = data.get('title')
+        body = data.get('body')
+
+        if not all([event_id, title, body]):
+            return JsonResponse({'status': False, 'message': 'Semua field harus diisi'}, status=400)
+
+        event = get_object_or_404(Event, pk=event_id)
+        
+        thread = ForumThread.objects.create(
+            event=event,
+            author=request.user,
+            title=title,
+            body=body
+        )
+
+        return JsonResponse({
+            'status': True,
+            'message': 'Thread berhasil dibuat',
+            'id': thread.id,
+            'slug': thread.slug, # Penting untuk navigasi selanjutnya
+            'title': thread.title
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+@csrf_exempt # Tambahkan ini
 @login_required
 @require_POST
 def create_post(request, slug):
     thread = get_object_or_404(ForumThread, slug=slug)
-    form = PostForm(request.POST)
+    
+    # Handle JSON input
+    import json
+    try:
+        data = json.loads(request.body)
+        form = PostForm(data)
+        parent_id = data.get("parent")
+    except:
+        form = PostForm(request.POST)
+        parent_id = request.POST.get("parent")
+
     if form.is_valid():
         post = form.save(commit=False)
         post.thread = thread
         post.author = request.user
-        parent_id = request.POST.get("parent")
+        
         if parent_id:
             try:
                 parent_post = ForumPost.objects.get(pk=parent_id, thread=thread)
                 post.parent = parent_post
-            except ForumPost.DoesNotExist as exc:
-                raise Http404("Parent post not found") from exc
+            except ForumPost.DoesNotExist:
+                pass 
+        
         post.save()
         thread.touch()
-        html = render_to_string(
-            "forum/partials/post.html",
-            {"post": post, "user": request.user, "is_reply": bool(post.parent_id)},
-            request=request,
-        )
-        return JsonResponse(
-            {
-                "success": True,
-                "html": html,
-                "post_id": post.id,
-                "parent_id": post.parent_id,
-            }
-        )
+        
+        # Return JSON Data Post Lengkap
+        return JsonResponse({
+            "success": True,
+            "post_id": post.id, # Keep for backward compatibility
+            "parent_id": post.parent_id,
+            # Data objek lengkap untuk Flutter ForumPost.fromJson:
+            "id": post.id,
+            "thread": thread.id,
+            "author": post.author.id,
+            "author_username": post.author.username,
+            "parent": post.parent_id,
+            "content": post.content,
+            "created_at": post.created_at.isoformat(),
+            "updated_at": post.updated_at.isoformat(),
+            "likes_count": 0,
+            "is_liked_by_user": False
+        })
 
     return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
