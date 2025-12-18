@@ -164,14 +164,24 @@ def register_ajax(request, slug):
         user=request.user, event=event
     ).select_related("category").first()
 
-    # Handle JSON body dari Flutter atau Form Data biasa
-    import json
-    try:
+    # Handle JSON data from Flutter or Form Data
+    if request.content_type == 'application/json':
+        import json
         data = json.loads(request.body)
-        # Flutter mengirim field category sebagai string ID, kita perlu sesuaikan jika form mengharapkan int
-        # Tapi RegistrationForm Django cukup pintar handling string digit.
-    except json.JSONDecodeError:
+        # Handle potential string 'null' values from Flutter serialization
+        for key in data:
+            if data[key] == 'null':
+                data[key] = None
+    else:
         data = request.POST
+
+    print(f"DEBUG: Content-Type: {request.content_type}")
+    print(f"DEBUG: Data received: {data}")
+    print(f"DEBUG: Event categories count: {event.categories.count()}")
+
+    # For open events (no categories), ensure category is None
+    if event.categories.count() == 0:
+        data['category'] = None
 
     form = RegistrationForm(data, event=event, user=request.user, instance=existing_registration)
 
