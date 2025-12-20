@@ -175,10 +175,6 @@ def register_ajax(request, slug):
     else:
         data = request.POST
 
-    print(f"DEBUG: Content-Type: {request.content_type}")
-    print(f"DEBUG: Data received: {data}")
-    print(f"DEBUG: Event categories count: {event.categories.count()}")
-
     # For open events (no categories), ensure category is None
     if event.categories.count() == 0:
         data['category'] = None

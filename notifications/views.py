@@ -56,3 +56,10 @@ def mark_notification_read(request, pk):
     note = get_object_or_404(Notification, pk=pk, recipient=request.user)
     note.mark_read()
     return JsonResponse({"success": True})
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"success": True})

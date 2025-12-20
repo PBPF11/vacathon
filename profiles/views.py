@@ -286,6 +286,8 @@ def profile_json(request):
         "country": profile.country,
         "favorite_distance": profile.favorite_distance,
         "avatar_url": profile.avatar_url,
+        "is_superuser": request.user.is_superuser,
+        "is_staff": request.user.is_staff,
         "achievements": [
             {
                 "id": achievement.id,
