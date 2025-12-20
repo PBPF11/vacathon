@@ -10,6 +10,9 @@ from .views import (
     toggle_like,
     api_thread_posts,
     create_thread_json,
+    delete_thread_api,
+    delete_post_api,
+    api_thread_detail,
 )
 
 app_name = "forum"
@@ -22,6 +25,9 @@ urlpatterns = [
     path("posts/<int:post_id>/like/", toggle_like, name="post-like"),
     path("posts/<int:post_id>/report/", report_post, name="post-report"),
     path("api/threads/", threads_json, name="threads-json"),
+    path("api/threads/<slug:slug>/", api_thread_detail, name="api-thread-detail"),
     path("api/threads/<slug:slug>/posts/", api_thread_posts, name="api-thread-posts"),
     path("api/threads/create/", create_thread_json, name="api-thread-create"),
+    path("api/threads/<slug:slug>/delete/", delete_thread_api, name="api-thread-delete"),
+    path("api/posts/<int:post_id>/delete/", delete_post_api, name="api-post-delete"),
 ]

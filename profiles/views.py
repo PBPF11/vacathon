@@ -596,7 +596,9 @@ def user_profile_json(request):
         "created_at": profile.created_at.isoformat(),
         "updated_at": profile.updated_at.isoformat(),
         "history": [], # Tambahkan logika history jika perlu
-        "achievements": [] # Tambahkan logika achievements jika perlu
+        "achievements": [], # Tambahkan logika achievements jika perlu
+        "is_superuser": request.user.is_superuser,
+        "is_staff": request.user.is_staff
     })
 
 @csrf_exempt
