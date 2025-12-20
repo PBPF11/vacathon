@@ -306,3 +306,80 @@ def report_post(request, post_id):
     if not created:
         return JsonResponse({"success": False, "message": "You already reported this post."}, status=400)
     return JsonResponse({"success": True, "message": "Report submitted. Thank you for keeping the forum safe."})
+
+@csrf_exempt
+@login_required
+@require_POST
+def delete_thread_api(request, slug):
+    try:
+        thread = get_object_or_404(ForumThread, slug=slug)
+        
+        # Cek permission: Author atau Admin
+        if request.user != thread.author and not request.user.is_staff and not request.user.is_superuser:
+             return JsonResponse({
+                'status': False,
+                'message': 'Anda tidak memiliki izin untuk menghapus thread ini.'
+            }, status=403)
+            
+        thread.delete()
+        return JsonResponse({
+            'status': True,
+            'message': 'Thread berhasil dihapus'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': False,
+            'message': str(e)
+        }, status=500)
+
+@csrf_exempt
+@login_required
+@require_POST
+def delete_post_api(request, post_id):
+    try:
+        post = get_object_or_404(ForumPost, pk=post_id)
+        
+        # Cek permission: Author atau Admin
+        if request.user != post.author and not request.user.is_staff and not request.user.is_superuser:
+             return JsonResponse({
+                'status': False,
+                'message': 'Anda tidak memiliki izin untuk menghapus post ini.'
+            }, status=403)
+            
+        post.delete()
+        return JsonResponse({
+            'status': True,
+            'message': 'Post berhasil dihapus'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': False,
+            'message': str(e)
+        }, status=500)
+
+@csrf_exempt
+@require_GET
+def api_thread_detail(request, slug):
+    print(f"DEBUG: api_thread_detail called for {slug}")
+    thread = get_object_or_404(ForumThread, slug=slug)
+    
+    # Increment View Count
+    ForumThread.objects.filter(pk=thread.pk).update(view_count=F("view_count") + 1)
+    thread.refresh_from_db()
+    
+    thread_data = {
+        "id": thread.id,
+        "event": thread.event.title, # Returned as title string for Flutter compatibility
+        "author": thread.author.id,
+        "author_username": thread.author.username,
+        "title": thread.title,
+        "slug": thread.slug,
+        "body": thread.body,
+        "created_at": thread.created_at.isoformat(),
+        "updated_at": thread.updated_at.isoformat(),
+        "last_activity_at": thread.last_activity_at.isoformat(),
+        "is_pinned": thread.is_pinned,
+        "is_locked": thread.is_locked,
+        "view_count": thread.view_count,
+    }
+    return JsonResponse(thread_data)
