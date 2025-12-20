@@ -147,7 +147,8 @@ def threads_json(request):
             "created_at": thread.created_at.isoformat(),
             "updated_at": thread.updated_at.isoformat(),
             "url": reverse("forum:thread-detail", kwargs={"slug": thread.slug}),
-            "event": thread.event.title,
+            "event": thread.event.id,
+            "event_title": thread.event.title,
             "author": thread.author.username,
             "last_activity_at": thread.last_activity_at.isoformat(),
             "is_pinned": thread.is_pinned,
@@ -369,7 +370,8 @@ def api_thread_detail(request, slug):
     
     thread_data = {
         "id": thread.id,
-        "event": thread.event.title, # Returned as title string for Flutter compatibility
+        "event": thread.event.id,
+        "event_title": thread.event.title,
         "author": thread.author.id,
         "author_username": thread.author.username,
         "title": thread.title,
