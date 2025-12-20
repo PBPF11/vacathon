@@ -215,12 +215,23 @@ def create_thread_json(request):
             body=body
         )
 
+        # Return full thread data to match ForumThread.fromJson in Flutter
         return JsonResponse({
-            'status': True,
-            'message': 'Thread berhasil dibuat',
-            'id': thread.id,
-            'slug': thread.slug, # Penting untuk navigasi selanjutnya
-            'title': thread.title
+            "id": thread.id,
+            "event": thread.event.id,
+            "event_title": thread.event.title,
+            "author": thread.author.id,
+            "author_username": thread.author.username,
+            "title": thread.title,
+            "slug": thread.slug,
+            "body": thread.body,
+            "created_at": thread.created_at.isoformat(),
+            "updated_at": thread.updated_at.isoformat(),
+            "last_activity_at": thread.last_activity_at.isoformat(),
+            "is_pinned": thread.is_pinned,
+            "is_locked": thread.is_locked,
+            "view_count": thread.view_count,
+            "post_count": 0, # Newly created thread has 0 posts
         }, status=201)
 
     except Exception as e:
