@@ -22,7 +22,6 @@ class EventAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "city", "start_date")
     search_fields = ("title", "description", "city")
-    prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("categories",)
 
     @admin.display(boolean=True)

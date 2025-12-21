@@ -26,7 +26,7 @@ class Event(models.Model):
         COMPLETED = "completed", "Completed"
 
     title = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=220, unique=True, editable=False)
+    slug = models.SlugField(max_length=220, unique=True, editable=True)
     description = models.TextField()
     city = models.CharField(max_length=120)
     country = models.CharField(max_length=120, default="Indonesia")
