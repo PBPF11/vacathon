@@ -302,11 +302,24 @@ def toggle_like(request, post_id):
     return JsonResponse({"success": True, "liked": liked, "like_count": post.like_count})
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def report_post(request, post_id):
     post = get_object_or_404(ForumPost, pk=post_id)
-    reason = request.POST.get("reason", "").strip()
+    
+    # Try to get reason from JSON body first, then fallback to POST form data
+    reason = ""
+    try:
+        import json
+        data = json.loads(request.body)
+        reason = data.get("reason", "").strip()
+    except:
+        pass
+        
+    if not reason:
+        reason = request.POST.get("reason", "").strip()
+
     if not reason:
         return JsonResponse({"success": False, "message": "Reason is required."}, status=400)
 
@@ -318,6 +331,57 @@ def report_post(request, post_id):
     if not created:
         return JsonResponse({"success": False, "message": "You already reported this post."}, status=400)
     return JsonResponse({"success": True, "message": "Report submitted. Thank you for keeping the forum safe."})
+
+
+
+@login_required
+@require_GET
+def get_reports(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({"status": False, "message": "Unauthorized"}, status=403)
+        
+    reports = PostReport.objects.filter(resolved=False).select_related('post', 'post__author', 'reporter').order_by('-created_at')
+    
+    # Simple pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(reports, 20)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    reports_data = [
+        {
+            "id": report.id,
+            "post_id": report.post.id,
+            "post_content": report.post.content,
+            "post_author": report.post.author.username,
+            "reporter": report.reporter.username,
+            "reason": report.reason,
+            "created_at": report.created_at.isoformat(),
+        }
+        for report in page_obj
+    ]
+    
+    return JsonResponse({
+        "results": reports_data,
+        "total": paginator.count,
+        "has_next": page_obj.has_next()
+    })
+
+@csrf_exempt
+@login_required
+@require_POST
+def resolve_report(request, report_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({"status": False, "message": "Unauthorized"}, status=403)
+        
+    report = get_object_or_404(PostReport, pk=report_id)
+    report.resolved = True
+    report.save()
+    
+    return JsonResponse({"success": True, "message": "Report resolved."})
+
+
+
 
 @csrf_exempt
 @login_required

@@ -13,6 +13,8 @@ from .views import (
     delete_thread_api,
     delete_post_api,
     api_thread_detail,
+    get_reports,
+    resolve_report,
 )
 
 app_name = "forum"
@@ -30,4 +32,6 @@ urlpatterns = [
     path("api/threads/<slug:slug>/posts/", api_thread_posts, name="api-thread-posts"),
     path("api/threads/<slug:slug>/delete/", delete_thread_api, name="api-thread-delete"),
     path("api/posts/<int:post_id>/delete/", delete_post_api, name="api-post-delete"),
+    path("api/reports/", get_reports, name="api-reports"),
+    path("api/reports/<int:report_id>/resolve/", resolve_report, name="api-report-resolve"),
 ]
