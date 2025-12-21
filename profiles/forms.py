@@ -25,6 +25,7 @@ class EventForm(forms.ModelForm):
             "categories",
             "status",
             "popularity_score",
+            "participant_limit", 
         ]
         widgets = {
             "start_date": forms.DateTimeInput(
@@ -53,6 +54,7 @@ class EventForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"class": "control"}),
             "city": forms.TextInput(attrs={"class": "control"}),
             "popularity_score": forms.NumberInput(attrs={"class": "control"}),
+            "participant_limit": forms.NumberInput(attrs={"class": "control"}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -131,4 +133,5 @@ class AdminEventForm(forms.ModelForm):
     class Meta:
         model = Event
         fields = ["title", "description", "city", "start_date", "end_date",
-                  "registration_deadline", "status", "categories"]
+                  "registration_deadline", "status", "categories", "participant_limit",
+                  "popularity_score"]
