@@ -289,6 +289,7 @@ def create_post(request, slug):
     return JsonResponse({"success": False, "errors": form.errors}, status=400)
 
 
+@csrf_exempt
 @login_required
 @require_POST
 def toggle_like(request, post_id):
