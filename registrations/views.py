@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, FormView, ListView
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
+from notifications.models import Notification
 
 from events.models import Event
 from profiles.models import UserProfile
@@ -96,6 +97,22 @@ class RegistrationDetailView(LoginRequiredMixin, DetailView):
     slug_field = "reference_code"
     template_name = "registrations/detail.html"
     context_object_name = "registration"
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        
+        # LOGIKA OTOMATIS: Cari notif unread yang link-nya ada kode VAC ini
+        # Kita gunakan mark_read() dari model agar read_at juga terisi
+        unread_notifs = Notification.objects.filter(
+            recipient=self.request.user,
+            is_read=False,
+            link_url__icontains=obj.reference_code
+        )
+        
+        for notif in unread_notifs:
+            notif.mark_read() # Menggunakan method di models.py lo
+            
+        return obj
 
     def get_queryset(self):
         return EventRegistration.objects.select_related("event", "category", "user")
@@ -267,3 +284,54 @@ def register_ajax(request, slug):
         "errors": form.errors,
         "non_field_errors": form.non_field_errors(),
     }, status=400)
+
+@login_required
+@require_GET
+def registration_detail_json(request, reference):
+    # Ambil data registrasi
+    registration = get_object_or_404(
+        EventRegistration.objects.select_related("event", "user"), 
+        reference_code=reference
+    )
+
+    Notification.objects.filter(
+        recipient=request.user,
+        is_read=False,
+        link_url__icontains=reference
+    ).update(is_read=True)
+    
+    # Fungsi pembantu untuk serialize event (copy dari register_ajax lo)
+    def serialize_event(evt):
+        return {
+            "id": evt.id,
+            "title": evt.title,
+            "slug": evt.slug,
+            "description": evt.description,
+            "city": evt.city,
+            "country": evt.country,
+            "venue": evt.venue,
+            "start_date": evt.start_date.isoformat(),
+            "registration_deadline": evt.registration_deadline.isoformat(),
+            "status": evt.status,
+            "participant_limit": evt.participant_limit,
+            "registered_count": evt.registered_count,
+            "banner_image": evt.banner_image.url if evt.banner_image else None,
+            "created_at": evt.created_at.isoformat(),
+            "updated_at": evt.updated_at.isoformat(),
+        }
+
+    return JsonResponse({
+        "id": str(registration.id),
+        "reference_code": registration.reference_code,
+        "user": registration.user.id,
+        "user_username": registration.user.username,
+        "event": serialize_event(registration.event),
+        "distance_label": registration.distance_label,
+        "phone_number": registration.phone_number,
+        "emergency_contact_name": registration.emergency_contact_name,
+        "emergency_contact_phone": registration.emergency_contact_phone,
+        "status": registration.status,
+        "payment_status": registration.payment_status,
+        "created_at": registration.created_at.isoformat(),
+        "updated_at": registration.updated_at.isoformat(),
+    })
