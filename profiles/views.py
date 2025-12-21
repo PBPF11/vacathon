@@ -286,6 +286,14 @@ def profile_json(request):
         "country": profile.country,
         "favorite_distance": profile.favorite_distance,
         "avatar_url": profile.avatar_url,
+        "emergency_contact_name": profile.emergency_contact_name,
+        "emergency_contact_phone": profile.emergency_contact_phone,
+        "website": profile.website,
+        "instagram_handle": profile.instagram_handle,
+        "strava_profile": profile.strava_profile,
+        "birth_date": profile.birth_date.isoformat() if profile.birth_date else None,
+        "created_at": profile.created_at.isoformat(),
+        "updated_at": profile.updated_at.isoformat(),
         "is_superuser": request.user.is_superuser,
         "is_staff": request.user.is_staff,
         "achievements": [
@@ -595,6 +603,12 @@ def user_profile_json(request):
         "country": profile.country,
         "avatar_url": profile.avatar_url,
         "favorite_distance": profile.favorite_distance,
+        "emergency_contact_name": profile.emergency_contact_name,
+        "emergency_contact_phone": profile.emergency_contact_phone,
+        "website": profile.website,
+        "instagram_handle": profile.instagram_handle,
+        "strava_profile": profile.strava_profile,
+        "birth_date": profile.birth_date.isoformat() if profile.birth_date else None,
         "created_at": profile.created_at.isoformat(),
         "updated_at": profile.updated_at.isoformat(),
         "history": [], # Tambahkan logika history jika perlu
@@ -617,26 +631,48 @@ def update_profile_json(request):
         # user.save()
 
         # Update Profile fields
+        # Helper to get value or empty string if None (to prevent NOT NULL constraint errors)
+        def get_val(key, default):
+            val = data.get(key)
+            if val is None:
+                # If key is in data but value is None, return ""
+                # If key is NOT in data, use default
+                if key in data:
+                    return ""
+                return default
+            return val
+
+        # Update Profile fields
         profile.display_name = data.get('display_name', profile.display_name)
-        profile.bio = data.get('bio', profile.bio)
-        profile.city = data.get('city', profile.city)
-        profile.country = data.get('country', profile.country)
-        profile.favorite_distance = data.get('favorite_distance', profile.favorite_distance)
-        profile.emergency_contact_name = data.get('emergency_contact_name', profile.emergency_contact_name)
-        profile.emergency_contact_phone = data.get('emergency_contact_phone', profile.emergency_contact_phone)
-        profile.website = data.get('website', profile.website)
-        profile.instagram_handle = data.get('instagram_handle', profile.instagram_handle)
+        profile.bio = get_val('bio', profile.bio)
+        profile.city = get_val('city', profile.city)
+        profile.country = get_val('country', profile.country)
+        profile.favorite_distance = get_val('favorite_distance', profile.favorite_distance)
+        profile.emergency_contact_name = get_val('emergency_contact_name', profile.emergency_contact_name)
+        profile.emergency_contact_phone = get_val('emergency_contact_phone', profile.emergency_contact_phone)
+        profile.website = get_val('website', profile.website)
+        profile.instagram_handle = get_val('instagram_handle', profile.instagram_handle)
+        profile.strava_profile = get_val('strava_profile', profile.strava_profile)
+        profile.avatar_url = get_val('avatar_url', profile.avatar_url)
         
         # Handle tanggal lahir (parse string ISO 8601 dari Flutter)
-        birth_date_str = data.get('birth_date')
-        if birth_date_str:
-            try:
-                # Ambil bagian tanggal saja 'YYYY-MM-DD' jika formatnya panjang
-                profile.birth_date = birth_date_str.split('T')[0] 
-            except:
-                pass
+        # Check if key exists to allow clearing
+        if 'birth_date' in data:
+            birth_date_str = data.get('birth_date')
+            if birth_date_str:
+                try:
+                    # Ambil bagian tanggal saja 'YYYY-MM-DD' jika formatnya panjang
+                    profile.birth_date = birth_date_str.split('T')[0] 
+                except:
+                    pass
+            else:
+                # If present but empty/None, clear it
+                profile.birth_date = None
 
         profile.save()
+        
+        # Refresh from DB to ensure dates are converted from string to date objects before serialization
+        profile.refresh_from_db()
 
         return JsonResponse({
             'status': True, 
@@ -649,9 +685,21 @@ def update_profile_json(request):
                 "bio": profile.bio,
                 "city": profile.city,
                 "country": profile.country,
-                # ... tambahkan field lain jika perlu untuk respons instan
+                "avatar_url": profile.avatar_url,
+                "favorite_distance": profile.favorite_distance,
+                "emergency_contact_name": profile.emergency_contact_name,
+                "emergency_contact_phone": profile.emergency_contact_phone,
+                "website": profile.website,
+                "instagram_handle": profile.instagram_handle,
+                "strava_profile": profile.strava_profile,
+                "birth_date": profile.birth_date.isoformat() if profile.birth_date else None,
+                "created_at": profile.created_at.isoformat(),
+                "updated_at": profile.updated_at.isoformat(),
+                "is_superuser": user.is_superuser,
+                "is_staff": user.is_staff,
             }
         })
 
     except Exception as e:
+        print(f"[ERROR] Update Profile Failed: {e}")
         return JsonResponse({'status': False, 'message': str(e)}, status=500)
