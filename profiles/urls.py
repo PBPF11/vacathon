@@ -39,4 +39,7 @@ urlpatterns = [
     path('auth/logout/', views.logout_api, name='api-logout'),
     path('auth/register/', views.register_api, name='api-register'),
     path('api/profile/update/', views.update_profile_json, name='api-profile-update'),
+    path('api/account/update/', views.update_account_json, name='api-account-update'),
+    path('api/account/password/', views.change_password_json, name='api-account-password'),
+    path('api/account/delete/', views.delete_account_json, name='api-account-delete'),
 ]

@@ -280,6 +280,7 @@ def profile_json(request):
 
     data = {
         "username": request.user.username,
+        "email": request.user.email,
         "display_name": profile.full_display_name,
         "bio": profile.bio,
         "city": profile.city,
@@ -681,6 +682,7 @@ def update_profile_json(request):
             'profile': {
                 "id": profile.id,
                 "username": user.username,
+                "email": user.email,
                 "display_name": profile.full_display_name,
                 "bio": profile.bio,
                 "city": profile.city,
@@ -697,8 +699,78 @@ def update_profile_json(request):
                 "updated_at": profile.updated_at.isoformat(),
                 "is_superuser": user.is_superuser,
                 "is_staff": user.is_staff,
+                "is_staff": user.is_staff,
             }
         })
+    except Exception as e:
+        print(f"[ERROR] Update Profile Failed: {e}")
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+from django.contrib.auth import update_session_auth_hash
+from django.db import IntegrityError
+
+@csrf_exempt
+@login_required
+@require_POST
+def update_account_json(request):
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        username = data.get('username')
+        email = data.get('email')
+        
+        if username:
+            user.username = username
+            
+        if email is not None:
+             # Handle empty email string
+            if email.strip() == "":
+                user.email = ""
+            else:
+                user.email = email
+        
+        try:
+            user.save()
+            return JsonResponse({'status': True, 'message': 'Akun berhasil diperbarui'})
+        except IntegrityError:
+             return JsonResponse({'status': False, 'message': 'Username sudah digunakan'}, status=400)
+             
+    except Exception as e:
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+@login_required
+@require_POST
+def change_password_json(request):
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        
+        if not user.check_password(current_password):
+            return JsonResponse({'status': False, 'message': 'Password saat ini salah'}, status=400)
+            
+        user.set_password(new_password)
+        user.save()
+        update_session_auth_hash(request, user) # Important!
+        
+        return JsonResponse({'status': True, 'message': 'Password berhasil diubah'})
+    except Exception as e:
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
+
+@csrf_exempt
+@login_required
+@require_POST
+def delete_account_json(request):
+    try:
+        user = request.user
+        user.delete()
+        return JsonResponse({'status': True, 'message': 'Akun berhasil dihapus'})
+    except Exception as e:
+        return JsonResponse({'status': False, 'message': str(e)}, status=500)
 
     except Exception as e:
         print(f"[ERROR] Update Profile Failed: {e}")
