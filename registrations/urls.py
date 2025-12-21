@@ -7,6 +7,7 @@ from .views import (
     RegistrationStartView,
     my_registrations_json,
     register_ajax,
+    registration_detail_json
 )
 
 app_name = "registrations"
@@ -21,4 +22,9 @@ urlpatterns = [
         name="detail",
     ),
     path("account/registrations/api/", my_registrations_json, name="mine-json"),
+    path(
+        "account/registrations/<slug:reference>/api/",
+        registration_detail_json,
+        name="detail-json",
+    ),
 ]
